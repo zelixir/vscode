@@ -60,8 +60,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 仓库 .npmrc 为 build_from_source=true，原生模块用 node-gyp 编译，
-      # windows-latest 自带 VS 构建工具与 Python，可编过但较慢（属正常）
+      # 仓库 .npmrc 为 build_from_source=true；原生模块编译走下方专门的
+      # ignore-scripts + 剥 Spectre + npm rebuild 三步（见该步骤块注释）
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -87,17 +87,20 @@ jobs:
             Write-Error "signtool.exe not found under $sdkRoot"
           }
 
-      # 依赖安装；env 与上游产品构建一致：
-      # - ELECTRON_SKIP_BINARY_DOWNLOAD：npm ci 阶段跳过 electron 二进制，
-      #   打包时由 @vscode/gulp-electron 按需从 electron 官方 GitHub 下载
-      #   （product.json 的 electronArtifactFeed 为空，走公开源，带校验和）
-      # - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD：本仓库约定不下载 Playwright 浏览器
-      # - build_from_source=true 会真编译原生模块（node-pty 等），慢属正常
-      - name: Install dependencies (npm ci)
+      # 依赖安装分四步（CI runner 没有 Spectre 缓解库，node-pty 等原生模块
+      # 在 install 脚本里直接编译会报 MSB8040，与本地开发环境同坑）：
+      #   1) npm ci --ignore-scripts 装依赖但不跑编译脚本
+      #   2) 从 node_modules 的 binding.gyp / *.vcxproj 里剥掉 SpectreMitigation
+      #      声明（本地已验证该剥法可编过，二进制行为无差异）
+      #   3) 显式 npm rebuild 只编译桌面版需要的原生模块清单
+      #   4) 补装 build/ 工具链与各保留扩展的 npm 依赖（正常由根 postinstall
+      #      遍历安装，--ignore-scripts 跳过了它）
+      # electron 二进制不在 npm 依赖里，打包时由 @vscode/gulp-electron 按需
+      # 从 electron 官方 GitHub 下载（product.json 的 feed 为空走公开源）。
+      - name: Install dependencies (npm ci --ignore-scripts)
         shell: pwsh
         env:
           npm_config_arch: x64
-          npm_config_foreground_scripts: 'true'
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -105,13 +108,78 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $ok = $false
           foreach ($i in 1..3) {
-            Write-Host "::group::npm ci attempt $i/3"
-            npm ci
+            Write-Host "::group::npm ci --ignore-scripts attempt $i/3"
+            npm ci --ignore-scripts
             Write-Host '::endgroup::'
             if ($LASTEXITCODE -eq 0) { $ok = $true; break }
             Start-Sleep -Seconds 15
           }
           if (-not $ok) { Write-Error 'npm ci failed after 3 attempts' }
+
+      - name: Strip Spectre lib requirement from native modules
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = Get-ChildItem node_modules -Recurse -Include binding.gyp,*.gypi,*.vcxproj -File |
+            Where-Object { (Get-Content $_.FullName -Raw) -match 'SpectreMitigation' }
+          foreach ($f in $files) {
+            Write-Host "stripping SpectreMitigation: $($f.FullName)"
+            $lines = Get-Content $f.FullName | Where-Object { $_ -notmatch 'SpectreMitigation' }
+            Set-Content -Path $f.FullName -Value $lines
+          }
+          Write-Host "patched $($files.Count) files"
+
+      - name: Build native modules (npm rebuild)
+        shell: pwsh
+        env:
+          npm_config_arch: x64
+          npm_config_foreground_scripts: 'true'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $native = @(
+            'native-keymap', 'native-is-elevated', 'node-pty',
+            '@vscode/native-watchdog', '@vscode/policy-watcher', '@vscode/spdlog',
+            '@vscode/sqlite3', '@vscode/windows-ca-certs', '@vscode/windows-mutex',
+            '@vscode/windows-process-tree', '@vscode/windows-registry',
+            '@vscode/deviceid', 'windows-foreground-love'
+          )
+          npm rebuild $native
+          if ($LASTEXITCODE -ne 0) { Write-Error 'npm rebuild failed' }
+
+      - name: Install build toolchain and extension deps
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --ignore-scripts --no-audit --no-fund --prefix build
+          if ($LASTEXITCODE -ne 0) { Write-Error 'build/ npm ci failed' }
+          $extDirs = @(
+            'extensions', 'extensions/configuration-editing',
+            'extensions/css-language-features', 'extensions/css-language-features/server',
+            'extensions/git', 'extensions/git-base',
+            'extensions/html-language-features', 'extensions/html-language-features/server',
+            'extensions/json-language-features', 'extensions/json-language-features/server',
+            'extensions/markdown-language-features', 'extensions/markdown-math',
+            'extensions/media-preview', 'extensions/merge-conflict',
+            'extensions/mermaid-markdown-features', 'extensions/php-language-features',
+            'extensions/search-result', 'extensions/typescript-language-features'
+          )
+          foreach ($d in $extDirs) {
+            if (Test-Path "$d/package-lock.json") {
+              Write-Host "::group::npm ci --prefix $d"
+              npm ci --ignore-scripts --no-audit --no-fund --prefix $d
+              Write-Host '::endgroup::'
+              if ($LASTEXITCODE -ne 0) { Write-Error "npm ci failed for $d" }
+            }
+          }
+
+      # electron.d.ts（src 类型检查与 monaco d.ts 门禁需要；正常由根
+      # postinstall 的 ensureElectronTypes 下载，--ignore-scripts 跳过了它）
+      - name: Download electron type declarations
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node --experimental-strip-types --input-type=module -e "const { ensureElectronTypes } = await import('file:///' + process.cwd().replace(/\\/g, '/') + '/build/npm/electronTypes.ts'); await ensureElectronTypes(); console.log('electron.d.ts ready')"
 
       # 版本号来自 package.json 的 version（当前 1.139.0），供产物命名
       - name: Read version from package.json
