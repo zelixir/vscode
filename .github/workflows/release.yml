@@ -1,0 +1,263 @@
+# ============================================================================
+# Code Slim 发布工作流（本 fork 专属；不改动上游任何 CI 工作流）
+#
+# 作用：推送 v* tag 或手动触发时，构建 VS Code 精简版（Code Slim）的
+#       win-x64（首选）与 linux-x64（可选）客户端压缩包，并发布 GitHub Release。
+#
+# 手动验证方式（只构建、不发布 Release，产物在工作流的 Artifacts 区下载）：
+#   GitHub 仓库页 → Actions → "Code Slim Release" → Run workflow → 选分支运行。
+#
+# 正式发布：
+#   git tag v1.139.0-slim.1 && git push origin v1.139.0-slim.1
+#   （任意 v* tag；构建成功后自动创建同名 Release 并附压缩包）
+#
+# 产物命名（版本号取自 package.json 的 version 字段）：
+#   code-slim-<version>-win32-x64.zip    / code-slim-<version>-linux-x64.tar.gz
+#
+# 核心构建命令说明（gulp 任务名调研自本仓库源码，非臆测）：
+#   npm run gulp vscode-win32-x64-min
+#     自包含任务链：编译扩展(copilot/原生/非原生) → esbuild 从 src 直接
+#     bundle+minify 出 out-vscode-min → 打包到仓库旁 ../VSCode-win32-x64
+#     （含 electron 二进制按需下载、rcedit 补丁、copilot ripgrep shim）。
+#     任务定义见 build/gulpfile.vscode.ts 的 BUILD_TARGETS 循环。
+#   npm run gulp vscode-linux-x64-min
+#     同上，产出 ../VSCode-linux-x64。
+#   压缩包做法与上游一致（上游在 build/azure-pipelines/win32/codesign.ts
+#   中对 ../VSCode-win32-<arch> 目录直接打 zip/tar）。
+#
+# 备注：Node 版本用 .nvmrc（当前 24.18.0）而非固定 22 —— build/npm/preinstall.ts
+#       会硬性校验 Node 主版本必须与 .nvmrc 一致，22 会导致 npm ci 直接失败。
+# ============================================================================
+
+name: Code Slim Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: code-slim-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ------------------------------------------------------------------
+  # Windows x64 构建（第一优先级；失败会阻断 Release 发布）
+  # ------------------------------------------------------------------
+  release-win32:
+    name: Build win32-x64
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      # fetch-depth: 0：build/lib/getVersion.ts 从 .git/HEAD 读取 commit
+      # 注入 product.json（product.commit），完整历史最稳妥
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 仓库 .npmrc 为 build_from_source=true，原生模块用 node-gyp 编译，
+      # windows-latest 自带 VS 构建工具与 Python，可编过但较慢（属正常）
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # patchWin32DependenciesTask（打包收尾）会 spawn signtool.exe 验签，
+      # 即使产物未签名也要能找到它 —— 把 Windows SDK 的 signtool 加入 PATH
+      # （与上游 build/azure-pipelines/win32/steps/product-build-win32-compile.yml 同理）
+      - name: Add Windows SDK signtool to PATH
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sdkRoot = 'C:\Program Files (x86)\Windows Kits\10\bin'
+          $latest = Get-ChildItem -Directory $sdkRoot -ErrorAction SilentlyContinue |
+            Where-Object { Test-Path (Join-Path $_.FullName 'x64\signtool.exe') } |
+            Sort-Object Name -Descending | Select-Object -First 1
+          if ($latest) {
+            $dir = Join-Path $latest.FullName 'x64'
+            Add-Content -Path $env:GITHUB_PATH -Value $dir
+            Write-Host "Added signtool dir to PATH: $dir"
+          } else {
+            Write-Error "signtool.exe not found under $sdkRoot"
+          }
+
+      # 依赖安装；env 与上游产品构建一致：
+      # - ELECTRON_SKIP_BINARY_DOWNLOAD：npm ci 阶段跳过 electron 二进制，
+      #   打包时由 @vscode/gulp-electron 按需从 electron 官方 GitHub 下载
+      #   （product.json 的 electronArtifactFeed 为空，走公开源，带校验和）
+      # - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD：本仓库约定不下载 Playwright 浏览器
+      # - build_from_source=true 会真编译原生模块（node-pty 等），慢属正常
+      - name: Install dependencies (npm ci)
+        shell: pwsh
+        env:
+          npm_config_arch: x64
+          npm_config_foreground_scripts: 'true'
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ok = $false
+          foreach ($i in 1..3) {
+            Write-Host "::group::npm ci attempt $i/3"
+            npm ci
+            Write-Host '::endgroup::'
+            if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+            Start-Sleep -Seconds 15
+          }
+          if (-not $ok) { Write-Error 'npm ci failed after 3 attempts' }
+
+      # 版本号来自 package.json 的 version（当前 1.139.0），供产物命名
+      - name: Read version from package.json
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content -Raw package.json | ConvertFrom-Json).version
+          "VSCODE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Version: $version"
+
+      # 编译 + minify + 打包（真实任务名 vscode-win32-x64-min，见文件头注释）
+      - name: Build minified package (gulp vscode-win32-x64-min)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run gulp vscode-win32-x64-min
+
+      # 打 zip：与上游一致，压缩包内容为 ../VSCode-win32-x64 的目录内容
+      - name: Zip build output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path '..\VSCode-win32-x64')) {
+            Write-Error 'Build output ..\VSCode-win32-x64 not found'
+          }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $dest = "dist/code-slim-$env:VSCODE_VERSION-win32-x64.zip"
+          Compress-Archive -Path '..\VSCode-win32-x64\*' -DestinationPath $dest -CompressionLevel Optimal
+          Get-Item $dest | Format-List Name, Length
+
+      - name: Upload artifact (win32-x64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-slim-win32-x64
+          path: dist/code-slim-*-win32-x64.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # Linux x64 构建（可选；失败不阻断 Release 发布，见 publish-release 条件）。
+  # 若暂时不需要 linux 产物，可将本 job 整段删除或改 needs。
+  # 注意：未使用上游的 glibc sysroot（低版本系统兼容性可能劣于官方产物），
+  #       在 ubuntu-24.04（glibc 2.39）上编译，老系统可能无法运行。
+  # ------------------------------------------------------------------
+  release-linux:
+    name: Build linux-x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # 原生模块编译/链接所需系统依赖（清单照抄上游 linux 产品构建流水线）
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y pkg-config \
+            xvfb \
+            libgtk-3-0 \
+            libxkbfile-dev \
+            libkrb5-dev \
+            libgbm1 \
+            rpm \
+            bubblewrap \
+            socat
+
+      - name: Install dependencies (npm ci)
+        shell: bash
+        env:
+          npm_config_arch: x64
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ok=0
+          for i in 1 2 3; do
+            echo "npm ci attempt $i/3"
+            if npm ci; then ok=1; break; fi
+            sleep 15
+          done
+          [ "$ok" = "1" ] || { echo "npm ci failed after 3 attempts"; exit 1; }
+
+      - name: Read version from package.json
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "VSCODE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "Version: $version"
+
+      - name: Build minified package (gulp vscode-linux-x64-min)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run gulp vscode-linux-x64-min
+
+      - name: Tar build output
+        shell: bash
+        run: |
+          set -e
+          [ -d ../VSCode-linux-x64 ] || { echo "Build output ../VSCode-linux-x64 not found"; exit 1; }
+          mkdir -p dist
+          tar -czf "dist/code-slim-${VSCODE_VERSION}-linux-x64.tar.gz" -C .. VSCode-linux-x64
+          ls -lh dist
+
+      - name: Upload artifact (linux-x64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-slim-linux-x64
+          path: dist/code-slim-*-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # 发布：仅在推送 v* tag 时执行；workflow_dispatch 到此为止（只构建留档）。
+  # 需要 win32 成功；linux 失败/跳过不阻断发布（届时 Release 仅含 win32 包）。
+  # ------------------------------------------------------------------
+  publish-release:
+    name: Publish GitHub Release
+    needs: [release-win32, release-linux]
+    if: ${{ !cancelled() && needs.release-win32.result == 'success' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: code-slim-*
+          merge-multiple: true
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Code Slim ${{ github.ref_name }}
+          files: dist/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

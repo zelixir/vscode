@@ -19,13 +19,23 @@ import { EditorExtensions, IEditorFactoryRegistry, IEditorSerializer } from '../
 import { EditorInput } from '../../../common/editor/editorInput.js';
 import { LifecyclePhase } from '../../../services/lifecycle/common/lifecycle.js';
 import { RuntimeExtensionsInput } from '../common/runtimeExtensionsInput.js';
-import { DebugExtensionHostInNewWindowAction, DebugExtensionsContribution, DebugRendererInNewWindowAction, DebugExtensionHostAndRendererAction } from './debugExtensionHostAction.js';
+import { DebugExtensionHostInNewWindowAction, DebugRendererInNewWindowAction, DebugExtensionHostAndRendererAction } from './debugExtensionHostAction.js';
 import { ExtensionHostProfileService } from './extensionProfileService.js';
 import { CleanUpExtensionsFolderAction, OpenExtensionsFolderAction } from './extensionsActions.js';
 import { ExtensionsAutoProfiler } from './extensionsAutoProfiler.js';
 import { InstallRemoteExtensionsContribution, RemoteExtensionsInitializerContribution } from './remoteExtensionsInit.js';
 import { IExtensionHostProfileService, OpenExtensionHostProfileACtion, RuntimeExtensionsEditor, SaveExtensionHostProfileAction, StartExtensionHostProfileAction, StopExtensionHostProfileAction } from './runtimeExtensionsEditor.js';
 import { ShowRuntimeExtensionsAction } from '../browser/abstractRuntimeExtensionsEditor.js';
+
+// Code Slim: these electron-browser layer services were previously registered by workbench.desktop.main.ts.
+// Their registrations moved here because this contribution is always loaded and hosts retained
+// consumers (IExtensionHostDebugService -> debugExtensionHostAction / localProcessExtensionHost,
+// IUserDataAutoSyncService / IUserDataSyncEnablementService -> extensions workbench service).
+// The settings sync / debug UI contributions themselves were removed from the entries.
+import '../../../services/userDataSync/electron-browser/userDataSyncService.js';
+import '../../../services/userDataSync/electron-browser/userDataAutoSyncService.js';
+import '../../../services/userDataSync/browser/userDataSyncEnablementService.js';
+import '../../../contrib/debug/electron-browser/extensionHostDebugService.js';
 
 // Singletons
 registerSingleton(IExtensionHostProfileService, ExtensionHostProfileService, InstantiationType.Delayed);
@@ -73,7 +83,8 @@ workbenchRegistry.registerWorkbenchContribution(ExtensionsContributions, Lifecyc
 workbenchRegistry.registerWorkbenchContribution(ExtensionsAutoProfiler, LifecyclePhase.Eventually);
 workbenchRegistry.registerWorkbenchContribution(RemoteExtensionsInitializerContribution, LifecyclePhase.Restored);
 workbenchRegistry.registerWorkbenchContribution(InstallRemoteExtensionsContribution, LifecyclePhase.Restored);
-workbenchRegistry.registerWorkbenchContribution(DebugExtensionsContribution, LifecyclePhase.Restored);
+// Code Slim: removed DebugExtensionsContribution registration — it constructor-injects IDebugService
+// (debug contrib removed) and only auto-attaches a debugger when debug ports are configured.
 
 // Register Commands
 

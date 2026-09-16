@@ -65,7 +65,7 @@ import './browser/parts/titlebar/menubar.contribution.js';
 
 import '../platform/actions/common/actions.contribution.js';
 import '../platform/undoRedo/common/undoRedoService.js';
-import '../platform/mcp/common/mcpResourceScannerService.js';
+// Code Slim: removed '../platform/mcp/common/mcpResourceScannerService.js' (MCP contrib removed)
 import './services/workspaces/common/editSessionIdentityService.js';
 import './services/workspaces/common/canonicalUriService.js';
 import './services/extensions/browser/extensionUrlHandler.js';
@@ -79,7 +79,7 @@ import './services/configuration/common/jsonEditingService.js';
 import './services/textmodelResolver/common/textModelResolverService.js';
 import './services/editor/browser/editorService.js';
 import './services/editor/browser/editorResolverService.js';
-import './services/aiEmbeddingVector/common/aiEmbeddingVectorService.js';
+// Code Slim: removed './services/aiEmbeddingVector/common/aiEmbeddingVectorService.js' (AI contrib removed)
 import './services/aiRelatedInformation/common/aiRelatedInformationService.js';
 import './services/aiSettingsSearch/common/aiSettingsSearchService.js';
 import './services/history/browser/historyService.js';
@@ -102,7 +102,8 @@ import './services/extensionRecommendations/common/extensionIgnoredRecommendatio
 import './services/extensionRecommendations/common/workspaceExtensionsConfig.js';
 import './services/extensionManagement/common/extensionFeaturesManagemetService.js';
 import './services/notification/common/notificationService.js';
-import './services/userDataSync/common/userDataSyncUtil.js';
+// Code Slim: removed './services/userDataSync/common/userDataSyncUtil.js' (registered in workbench.slim.services.js)
+// Code Slim: removed './services/userDataSync/browser/userDataSyncWorkbenchService.js' (registered in workbench.slim.services.js)
 import './services/userDataProfile/browser/userDataProfileImportExportService.js';
 import './services/userDataProfile/browser/userDataProfileManagement.js';
 import './services/userDataProfile/common/remoteUserDataProfiles.js';
@@ -116,7 +117,7 @@ import './services/filesConfiguration/common/filesConfigurationService.js';
 import './services/views/browser/viewDescriptorService.js';
 import './services/views/browser/viewsService.js';
 import './services/quickinput/browser/quickInputService.js';
-import './services/userDataSync/browser/userDataSyncWorkbenchService.js';
+// Code Slim: removed './services/userDataSync/browser/userDataSyncWorkbenchService.js' (registered in workbench.slim.services.js)
 import './services/authentication/browser/authenticationService.js';
 import './services/authentication/browser/authenticationExtensionsService.js';
 import './services/authentication/browser/authenticationUsageService.js';
@@ -145,9 +146,13 @@ import './services/dataChannel/browser/dataChannelService.js';
 import './services/github/browser/githubService.js';
 import './services/inlineCompletions/common/inlineCompletionsUnification.js';
 import './services/chat/common/chatEntitlementService.js';
-import './services/agentHost/common/agentHostResourceService.js';
-import '../platform/agentHost/browser/agentHostConnectionsService.js';
+// Code Slim: removed './services/agentHost/common/agentHostResourceService.js' and
+// '../platform/agentHost/browser/agentHostConnectionsService.js' (agent-host backend removed)
 import './services/log/common/defaultLogLevels.js';
+
+// Code Slim: slim bridge that keeps the few settings-sync services which are still consumed by
+// retained features (preferences, update, relauncher, extensions) registered.
+import './workbench.slim.services.js';
 
 import { InstantiationType, registerSingleton } from '../platform/instantiation/common/extensions.js';
 import { GlobalExtensionEnablementService } from '../platform/extensionManagement/common/extensionEnablementService.js';
@@ -167,20 +172,15 @@ import { IDownloadService } from '../platform/download/common/download.js';
 import { DownloadService } from '../platform/download/common/downloadService.js';
 import { OpenerService } from '../editor/browser/services/openerService.js';
 import { IOpenerService } from '../platform/opener/common/opener.js';
-import { IgnoredExtensionsManagementService, IIgnoredExtensionsManagementService } from '../platform/userDataSync/common/ignoredExtensions.js';
+// Code Slim: removed platform/userDataSync imports (IgnoredExtensionsManagementService registration
+// moved to workbench.slim.services.js; UserDataSyncLogService dropped with settings sync UI)
 import { ExtensionStorageService, IExtensionStorageService } from '../platform/extensionManagement/common/extensionStorage.js';
-import { IUserDataSyncLogService } from '../platform/userDataSync/common/userDataSync.js';
-import { UserDataSyncLogService } from '../platform/userDataSync/common/userDataSyncLog.js';
 import { AllowedExtensionsService } from '../platform/extensionManagement/common/allowedExtensionsService.js';
-import { IAllowedMcpServersService, IMcpGalleryService } from '../platform/mcp/common/mcpManagement.js';
-import { McpGalleryService } from '../platform/mcp/common/mcpGalleryService.js';
-import { AllowedMcpServersService } from '../platform/mcp/common/allowedMcpServersService.js';
+// Code Slim: removed McpGalleryService / AllowedMcpServersService registrations (MCP contrib removed)
 import { IWebWorkerService } from '../platform/webWorker/browser/webWorkerService.js';
 import { WebWorkerService } from '../platform/webWorker/browser/webWorkerServiceImpl.js';
 
-registerSingleton(IUserDataSyncLogService, UserDataSyncLogService, InstantiationType.Delayed);
 registerSingleton(IAllowedExtensionsService, AllowedExtensionsService, InstantiationType.Delayed);
-registerSingleton(IIgnoredExtensionsManagementService, IgnoredExtensionsManagementService, InstantiationType.Delayed);
 registerSingleton(IGlobalExtensionEnablementService, GlobalExtensionEnablementService, InstantiationType.Delayed);
 registerSingleton(IExtensionStorageService, ExtensionStorageService, InstantiationType.Delayed);
 registerSingleton(IContextViewService, ContextViewService, InstantiationType.Delayed);
@@ -192,8 +192,6 @@ registerSingleton(ITextResourceConfigurationService, TextResourceConfigurationSe
 registerSingleton(IDownloadService, DownloadService, InstantiationType.Delayed);
 registerSingleton(IOpenerService, OpenerService, InstantiationType.Delayed);
 registerSingleton(IWebWorkerService, WebWorkerService, InstantiationType.Delayed);
-registerSingleton(IMcpGalleryService, McpGalleryService, InstantiationType.Delayed);
-registerSingleton(IAllowedMcpServersService, AllowedMcpServersService, InstantiationType.Delayed);
 
 //#endregion
 
@@ -220,35 +218,21 @@ import './contrib/preferences/browser/preferencesSearch.js';
 // Performance
 import './contrib/performance/browser/performance.contribution.js';
 
-// Notebook
-import './contrib/notebook/browser/notebook.contribution.js';
+// Code Slim: removed './contrib/notebook/browser/notebook.contribution.js' (notebook contrib removed)
 
-// Speech
+// Speech (kept: backs editor dictation / accessibility; registered by retained contribs)
 import './contrib/speech/browser/speech.contribution.js';
 
-// Chat
-import './contrib/chat/browser/chat.shared.contribution.js';
-import './contrib/chat/browser/chat.contribution.js';
-import './contrib/chat/browser/agentSessions/agentHost/agentHost.contribution.js';
-import './contrib/chat/browser/chat.view.contribution.js';
-import './contrib/inlineChat/browser/inlineChat.contribution.js';
+// Chat — Code Slim: the chat UI contributions are removed; the retained chat *service* registration
+// lives in workbench.slim.services.js (see the list of removed contrib imports there).
 
-// Copilot Voice
-import './contrib/agentsVoice/browser/agentsVoice.contribution.js';
-import './contrib/mcp/browser/mcp.contribution.js';
-import './contrib/mcp/browser/mcp.view.contribution.js';
-import './contrib/chat/browser/chatSessions/chatSessions.contribution.js';
-import './contrib/chat/browser/contextContrib/chatContext.contribution.js';
+// Image carousel (standalone editor feature, kept)
 import './contrib/imageCarousel/browser/imageCarousel.contribution.js';
 
-// Interactive
-import './contrib/interactive/browser/interactive.contribution.js';
+// Code Slim: removed './contrib/interactive/browser/interactive.contribution.js' (interactive window removed)
+// Code Slim: removed './contrib/replNotebook/browser/repl.contribution.js' (repl notebook removed)
 
-// repl
-import './contrib/replNotebook/browser/repl.contribution.js';
-
-// Testing
-import './contrib/testing/browser/testing.contribution.js';
+// Code Slim: removed './contrib/testing/browser/testing.contribution.js' (testing contrib removed)
 
 // Logs
 import './contrib/logs/common/logs.contribution.js';
@@ -287,13 +271,13 @@ import './contrib/scm/browser/scm.contribution.js';
 import './contrib/scm/browser/quickDiff.contribution.js';
 import './contrib/scm/browser/scm.service.contribution.js';
 
-// Debug
-import './contrib/debug/browser/debug.contribution.js';
-import './contrib/debug/browser/debugEditorContribution.js';
-import './contrib/debug/browser/breakpointEditorContribution.js';
-import './contrib/debug/browser/callStackEditorContribution.js';
-import './contrib/debug/browser/repl.js';
-import './contrib/debug/browser/debugViewlet.js';
+// Debug — Code Slim: removed all debug contrib imports:
+//   './contrib/debug/browser/debug.contribution.js'
+//   './contrib/debug/browser/debugEditorContribution.js'
+//   './contrib/debug/browser/breakpointEditorContribution.js'
+//   './contrib/debug/browser/callStackEditorContribution.js'
+//   './contrib/debug/browser/repl.js'
+//   './contrib/debug/browser/debugViewlet.js'
 
 // Markers
 import './contrib/markers/browser/markers.contribution.js';
@@ -345,15 +329,13 @@ import './contrib/relauncher/browser/relauncher.contribution.js';
 // Modern UI (experimental)
 import './contrib/modernUI/browser/modernUI.contribution.js';
 
-// Tasks
-import './contrib/tasks/browser/task.contribution.js';
+// Tasks — Code Slim: removed './contrib/tasks/browser/task.contribution.js' (tasks contrib removed)
 
-// Remote
-import './contrib/remote/common/remote.contribution.js';
-import './contrib/remote/browser/remote.contribution.js';
+// Remote — Code Slim: removed remote contrib imports:
+//   './contrib/remote/common/remote.contribution.js'
+//   './contrib/remote/browser/remote.contribution.js'
 
-// Emmet
-import './contrib/emmet/browser/emmet.contribution.js';
+// Emmet — Code Slim: removed './contrib/emmet/browser/emmet.contribution.js' (emmet contrib removed)
 
 // CodeEditor Contributions
 import './contrib/codeEditor/browser/codeEditor.contribution.js';
@@ -391,13 +373,16 @@ import './contrib/surveys/browser/languageSurveys.contribution.js';
 
 // Welcome
 import './contrib/welcomeGettingStarted/browser/gettingStarted.contribution.js';
-import './contrib/welcomeAgentSessions/browser/agentSessionsWelcome.contribution.js';
+// Code Slim: removed './contrib/welcomeAgentSessions/browser/agentSessionsWelcome.contribution.js' (agent sessions welcome removed)
 import './contrib/welcomeWalkthrough/browser/walkThrough.contribution.js';
 import './contrib/welcomeViews/common/viewsWelcome.contribution.js';
 import './contrib/welcomeViews/common/newFile.contribution.js';
 
 // Welcome Onboarding
-import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
+// Code Slim: removed './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js'
+// (chat-driven onboarding wizard removed with the chat contribs; it hard-fails at module load
+// without product.defaultChatAgent and took down the whole workbench renderer).
+// IOnboardingService (consumed by startupPage) is registered headless in workbench.slim.services.ts.
 
 // Onboarding (scenario engine)
 import './contrib/onboarding/browser/onboarding.contribution.js';
@@ -421,17 +406,12 @@ import './contrib/languageStatus/browser/languageStatus.contribution.js';
 // Authentication
 import './contrib/authentication/browser/authentication.contribution.js';
 
-// User Data Sync
-import './contrib/userDataSync/browser/userDataSync.contribution.js';
-
 // User Data Profiles
 import './contrib/userDataProfile/browser/userDataProfile.contribution.js';
 
-// Continue Edit Session
-import './contrib/editSessions/browser/editSessions.contribution.js';
-
-// Remote Coding Agents
-import './contrib/remoteCodingAgents/browser/remoteCodingAgents.contribution.js';
+// Code Slim: removed './contrib/userDataSync/browser/userDataSync.contribution.js' (settings sync UI removed)
+// Code Slim: removed './contrib/editSessions/browser/editSessions.contribution.js' (edit sessions removed)
+// Code Slim: removed './contrib/remoteCodingAgents/browser/remoteCodingAgents.contribution.js' (remote coding agents removed)
 
 // Code Actions
 import './contrib/codeActions/browser/codeActions.contribution.js';

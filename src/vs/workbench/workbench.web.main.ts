@@ -43,7 +43,7 @@ import './services/extensionManagement/browser/extensionsProfileScannerService.j
 import './services/extensions/browser/extensionsScannerService.js';
 import './services/extensionManagement/browser/webExtensionsScannerService.js';
 import './services/extensionManagement/common/extensionManagementServerService.js';
-import './services/mcp/browser/mcpWorkbenchManagementService.js';
+// Code Slim: removed './services/mcp/browser/mcpWorkbenchManagementService.js' (MCP contrib removed)
 import './services/extensionManagement/browser/extensionGalleryManifestService.js';
 import './services/telemetry/browser/telemetryService.js';
 import './services/url/browser/urlService.js';
@@ -99,13 +99,12 @@ import { IDiagnosticsService, NullDiagnosticsService } from '../platform/diagnos
 import { ILanguagePackService } from '../platform/languagePacks/common/languagePacks.js';
 import { WebLanguagePacksService } from '../platform/languagePacks/browser/languagePacks.js';
 import { IWebContentExtractorService, NullWebContentExtractorService, ISharedWebContentExtractorService, NullSharedWebContentExtractorService } from '../platform/webContentExtractor/common/webContentExtractor.js';
-import { IMcpGalleryManifestService } from '../platform/mcp/common/mcpGalleryManifest.js';
-import { WorkbenchMcpGalleryManifestService } from './services/mcp/browser/mcpGalleryManifestService.js';
+// Code Slim: removed IMcpGalleryManifestService import + WorkbenchMcpGalleryManifestService registration (MCP contrib removed)
 import { UserDataSyncResourceProviderService } from '../platform/userDataSync/common/userDataSyncResourceProvider.js';
 import { IAgentHostService } from '../platform/agentHost/common/agentService.js';
 import { EditorRemoteAgentHostServiceClient } from './services/agentHost/browser/editorRemoteAgentHostServiceClient.js';
 import { IRemoteAgentHostService, NullRemoteAgentHostService } from '../platform/agentHost/common/remoteAgentHostService.js';
-import { BrowserAgentHostDebugLogsExportService, IAgentHostDebugLogsExportService } from './contrib/chat/browser/actions/exportAgentHostDebugLogsAction.js';
+// Code Slim: removed BrowserAgentHostDebugLogsExportService import from contrib/chat (chat UI removed)
 import './services/agentHost/browser/webAgentHostEnablementService.js';
 
 registerSingleton(IWorkbenchExtensionManagementService, ExtensionManagementService, InstantiationType.Delayed);
@@ -126,10 +125,9 @@ registerSingleton(IDiagnosticsService, NullDiagnosticsService, InstantiationType
 registerSingleton(ILanguagePackService, WebLanguagePacksService, InstantiationType.Delayed);
 registerSingleton(IWebContentExtractorService, NullWebContentExtractorService, InstantiationType.Delayed);
 registerSingleton(ISharedWebContentExtractorService, NullSharedWebContentExtractorService, InstantiationType.Delayed);
-registerSingleton(IMcpGalleryManifestService, WorkbenchMcpGalleryManifestService, InstantiationType.Delayed);
+// Code Slim: removed WorkbenchMcpGalleryManifestService registration (MCP contrib removed)
 registerSingleton(IAgentHostService, EditorRemoteAgentHostServiceClient, InstantiationType.Delayed);
 registerSingleton(IRemoteAgentHostService, NullRemoteAgentHostService, InstantiationType.Delayed);
-registerSingleton(IAgentHostDebugLogsExportService, BrowserAgentHostDebugLogsExportService, InstantiationType.Delayed);
 
 //#endregion
 
@@ -165,8 +163,7 @@ import './contrib/terminal/browser/terminal.web.contribution.js';
 import './contrib/externalTerminal/browser/externalTerminal.contribution.js';
 import './contrib/terminal/browser/terminalInstanceService.js';
 
-// Tasks
-import './contrib/tasks/browser/taskService.js';
+// Tasks — Code Slim: removed './contrib/tasks/browser/taskService.js' (tasks contrib removed)
 
 // Tags
 import './contrib/tags/browser/workspaceTagsService.js';
@@ -180,8 +177,7 @@ import './contrib/surveys/browser/survey.contribution.js';
 // Splash
 import './contrib/splash/browser/splash.contribution.js';
 
-// Remote Start Entry for the Web
-import './contrib/remote/browser/remoteStartEntry.contribution.js';
+// Code Slim: removed './contrib/remote/browser/remoteStartEntry.contribution.js' (remote contrib removed)
 
 // Process Explorer
 import './contrib/processExplorer/browser/processExplorer.web.contribution.js';

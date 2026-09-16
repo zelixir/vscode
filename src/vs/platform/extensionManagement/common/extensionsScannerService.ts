@@ -109,7 +109,8 @@ interface IBuiltInExtensionControl {
 
 function getProductBuiltInExtensionsEnabledWithAutoUpdates(productService: IProductService, environmentService: IEnvironmentService): Set<string> {
 	const result = new Set<string>();
-	for (const id of productService.builtInExtensionsEnabledWithAutoUpdates) {
+	// Code Slim: guard for product.json builds that don't define builtInExtensionsEnabledWithAutoUpdates
+	for (const id of productService.builtInExtensionsEnabledWithAutoUpdates ?? []) {
 		const toLowerCaseId = id.toLowerCase();
 		if (environmentService.skipBuiltinExtensions?.some(skipId => skipId.toLowerCase() === toLowerCaseId)) {
 			continue;

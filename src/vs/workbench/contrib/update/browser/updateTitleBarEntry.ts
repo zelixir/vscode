@@ -9,7 +9,6 @@ import { IManagedHoverContent, IManagedHoverOptions, IHoverWidget } from '../../
 import { IAction, WorkbenchActionExecutedClassification, WorkbenchActionExecutedEvent } from '../../../../base/common/actions.js';
 import { AnchorAlignment } from '../../../../base/common/layout.js';
 import { Disposable, MutableDisposable } from '../../../../base/common/lifecycle.js';
-import { autorun } from '../../../../base/common/observable.js';
 import { isWeb } from '../../../../base/common/platform.js';
 import { localize } from '../../../../nls.js';
 import { IActionViewItemService } from '../../../../platform/actions/browser/actionViewItemService.js';
@@ -24,8 +23,9 @@ import { ITelemetryService } from '../../../../platform/telemetry/common/telemet
 import { DisablementReason, IUpdateService, State, StateType } from '../../../../platform/update/common/update.js';
 import { IWorkbenchContribution } from '../../../common/contributions.js';
 import { IHostService } from '../../../services/host/browser/host.js';
-import { IChatService } from '../../chat/common/chatService/chatService.js';
-import { UpdateTitleBarChatInProgressContext, UpdateTitleBarContext, UpdateTitleBarEditorVisibleContext } from '../common/update.js';
+// Code Slim: removed IChatService injection (chat service construction needs IMcpService; the
+// "chat in progress" title-bar context is now never set)
+import { UpdateTitleBarContext, UpdateTitleBarEditorVisibleContext } from '../common/update.js';
 import { computeProgressPercent } from '../common/updateUtils.js';
 import './media/updateTitleBarEntry.css';
 import { UpdateTooltip } from './updateTooltip.js';
@@ -87,7 +87,6 @@ export class UpdateTitleBarContribution extends Disposable implements IWorkbench
 
 	constructor(
 		@IActionViewItemService actionViewItemService: IActionViewItemService,
-		@IChatService chatService: IChatService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IContextKeyService contextKeyService: IContextKeyService,
 		@IHostService private readonly hostService: IHostService,
@@ -104,10 +103,7 @@ export class UpdateTitleBarContribution extends Disposable implements IWorkbench
 		this.context = UpdateTitleBarContext.bindTo(contextKeyService);
 		this.tooltip = this._register(instantiationService.createInstance(UpdateTooltip));
 
-		const chatInProgressContext = UpdateTitleBarChatInProgressContext.bindTo(contextKeyService);
-		this._register(autorun(reader => {
-			chatInProgressContext.set(chatService.requestInProgressObs.read(reader));
-		}));
+		// Code Slim: chat removed — UpdateTitleBarChatInProgressContext is never set.
 
 		this.state = updateService.state;
 		this._register(updateService.onStateChange((state) => {

@@ -91,6 +91,24 @@ interface IMcpRegistryResponse {
 }
 
 function toDefaultAccountConfig(defaultChatAgent: IDefaultChatAgent): IDefaultAccountConfig {
+	// Code Slim: chat contribs were removed, so product.defaultChatAgent may be undefined.
+	// Return an inert config instead of crashing at startup (BlockStartup contribution).
+	if (!defaultChatAgent) {
+		return {
+			preferredExtensions: [],
+			authenticationProvider: {
+				default: { id: '', name: '' },
+				enterprise: { id: '', name: '' },
+				enterpriseProviderConfig: '',
+				enterpriseProviderUriSetting: '',
+				scopes: [],
+			},
+			tokenEntitlementUrl: '',
+			entitlementUrl: '',
+			mcpRegistryDataUrl: '',
+			managedSettingsUrl: '',
+		};
+	}
 	return {
 		preferredExtensions: [
 			defaultChatAgent.chatExtensionId,
@@ -1641,6 +1659,10 @@ class DefaultAccountProviderContribution extends Disposable implements IWorkbenc
 		@IDefaultAccountService defaultAccountService: IDefaultAccountService,
 	) {
 		super();
+		// Code Slim: without a chat product config there is no account provider to set up.
+		if (!productService.defaultChatAgent) {
+			return;
+		}
 		const defaultAccountProvider = this._register(instantiationService.createInstance(DefaultAccountProvider, toDefaultAccountConfig(productService.defaultChatAgent)));
 		defaultAccountService.setDefaultAccountProvider(defaultAccountProvider);
 	}

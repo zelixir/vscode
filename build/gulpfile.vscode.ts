@@ -27,7 +27,7 @@ import { config } from './lib/electron.ts';
 import { createAsar } from './lib/asar.ts';
 import minimist from 'minimist';
 import { compileBuildWithoutManglingTask, compileBuildWithManglingTask } from './gulpfile.compile.ts';
-import { compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileAllExtensionsBuildTask, compileExtensionMediaBuildTask, cleanExtensionsBuildTask, compileCopilotExtensionBuildTask } from './gulpfile.extensions.ts';
+import { compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileAllExtensionsBuildTask, compileExtensionMediaBuildTask, cleanExtensionsBuildTask } from './gulpfile.extensions.ts';
 import { checkApiProposalNamesTask, copyCodiconsTask } from './lib/compilation.ts';
 import { ensureCopilotPlatformPackage, getCopilotExcludeFilter, getCopilotRuntimePrebuildFiles, getCopilotTgrepExcludeFilter, getMxcExcludeFilter, getRipgrepExcludeFilter, prepareBuiltInCopilotRipgrepShim } from './lib/copilot.ts';
 import { ensureOSProxyResolverPlatformPackage, getOSProxyResolverExcludeFilter, getOSProxyResolverPlatformFiles } from './lib/osProxyResolver.ts';
@@ -49,13 +49,8 @@ const packageLock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.jso
 	readonly packages?: Readonly<Record<string, { readonly version?: string }>>;
 };
 
-function getLockedPackageVersion(packageName: string): string {
-	const version = packageLock.packages?.[`node_modules/${packageName}`]?.version;
-	if (!version) {
-		throw new Error(`Package ${packageName} is missing a version in package-lock.json.`);
-	}
-
-	return version;
+function getLockedPackageVersion(packageName: string): string | undefined {
+	return packageLock.packages?.[`node_modules/${packageName}`]?.version;
 }
 
 // Build
@@ -342,10 +337,16 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				json.date = readISODate(out);
 				json.checksums = checksums;
 				json.version = version;
-				json.copilotVersions = {
-					runtime: getLockedPackageVersion('@github/copilot'),
-					sdk: getLockedPackageVersion('@github/copilot-sdk'),
-				};
+				// Copilot deps may be pruned from package-lock.json (slim builds):
+				// versions absent → not stamped, mirroring agentSdks / dictationRuntime below.
+				const copilotRuntimeVersion = getLockedPackageVersion('@github/copilot');
+				const copilotSdkVersion = getLockedPackageVersion('@github/copilot-sdk');
+				if (copilotRuntimeVersion && copilotSdkVersion) {
+					json.copilotVersions = {
+						runtime: copilotRuntimeVersion,
+						sdk: copilotSdkVersion,
+					};
+				}
 				// Stamp agentSdks from the per-platform results file produced
 				// by `build/agent-sdk/produce.ts` (an earlier pipeline step).
 				// Local dev: file absent → empty → not stamped.
@@ -618,6 +619,21 @@ function hasAuthenticodeSignature(filePath: string): Promise<boolean> {
 	});
 }
 
+function isWin32PE(filePath: string): Promise<boolean> {
+	return new Promise((resolve, reject) => {
+		(async () => {
+			const handle = await fs.promises.open(filePath, 'r');
+			try {
+				const buffer = Buffer.alloc(2);
+				await handle.read(buffer, 0, 2, 0);
+				resolve(buffer[0] === 0x4d && buffer[1] === 0x5a); // 'MZ'
+			} finally {
+				await handle.close();
+			}
+		})().catch(reject);
+	});
+}
+
 async function stripAuthenticodeSignature(filePath: string): Promise<void> {
 	// ESRP's `signtool /as` (append) fails with 0x800700C1 on PEs whose existing
 	// Authenticode signature was invalidated by rcedit. Strip cleanly first so
@@ -662,6 +678,13 @@ function patchWin32DependenciesTask(destinationFolderName: string) {
 		const patchPromises = deps.map<Promise<unknown>>(async dep => {
 			const basename = path.basename(dep);
 			const fullPath = path.join(cwd, dep);
+
+			// Cross-platform prebuilds (e.g. node-pty ships ELF/Mach-O .node files)
+			// are not Windows PE images: rcedit cannot parse them. Version stamping
+			// only applies to PE files.
+			if (!await isWin32PE(fullPath)) {
+				return;
+			}
 
 			await stripAuthenticodeSignature(fullPath);
 			await rcedit(fullPath, {
@@ -751,7 +774,6 @@ BUILD_TARGETS.forEach(buildTarget => {
 				copyCodiconsTask,
 				cleanExtensionsBuildTask,
 				compileNonNativeExtensionsBuildTask,
-				compileCopilotExtensionBuildTask,
 				compileExtensionMediaBuildTask,
 				writeISODate('out-build'),
 				esbuildBundleTask,
@@ -762,7 +784,6 @@ BUILD_TARGETS.forEach(buildTarget => {
 				minified ? compileBuildWithManglingTask : compileBuildWithoutManglingTask,
 				cleanExtensionsBuildTask,
 				compileNonNativeExtensionsBuildTask,
-				compileCopilotExtensionBuildTask,
 				compileExtensionMediaBuildTask,
 				minified ? minifyVSCodeTask : bundleVSCodeTask,
 				vscodeTaskCI

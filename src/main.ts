@@ -36,6 +36,13 @@ const portable = configurePortable(product);
 const args = parseCLIArgs();
 // Configure static command line arguments
 const argvConfig = configureCommandlineSwitchesSync(args);
+
+// Low-memory profile: default to software rendering (the GPU process costs
+// ~120MB); opt back in per machine via argv.json `"enable-hardware-acceleration": true`.
+if (argvConfig['enable-hardware-acceleration'] !== true) {
+	app.disableHardwareAcceleration();
+}
+
 // Enable sandbox globally unless
 // 1) disabled via command line using either
 //    `--no-sandbox` or `--disable-chromium-sandbox` argument.
@@ -354,6 +361,11 @@ function configureCommandlineSwitchesSync(cliArgs: NativeParsedArgs) {
 		`CalculateNativeWinOcclusion,${app.commandLine.getSwitchValue('disable-features')}`;
 	app.commandLine.appendSwitch('disable-features', featuresToDisable);
 
+	// Low-memory profile: cap total renderer processes and merge renderers of
+	// the same site so multiple windows/webviews share fewer processes.
+	app.commandLine.appendSwitch('renderer-process-limit', '2');
+	app.commandLine.appendSwitch('process-per-site');
+
 	// Blink features to configure.
 	// `FontMatchingCTMigration` - Siwtch font matching on macOS to Appkit (Refs https://github.com/microsoft/vscode/issues/224496#issuecomment-2270418470).
 	// `StandardizedBrowserZoom` - Disable zoom adjustment for bounding box (https://github.com/microsoft/vscode/issues/232750#issuecomment-2459495394)
@@ -385,6 +397,7 @@ interface IArgvConfig {
 	readonly 'disable-lcd-text'?: boolean;
 	readonly 'proxy-bypass-list'?: string;
 	readonly 'disable-hardware-acceleration'?: boolean;
+	readonly 'enable-hardware-acceleration'?: boolean;
 	readonly 'force-color-profile'?: string;
 	readonly 'enable-crash-reporter'?: boolean;
 	readonly 'crash-reporter-id'?: string;
@@ -442,6 +455,10 @@ function createDefaultArgvConfigSync(argvConfigPath: string): void {
 			'	// Use software rendering instead of hardware accelerated rendering.',
 			'	// This can help in cases where you see rendering issues in VS Code.',
 			'	// "disable-hardware-acceleration": true',
+			'',
+			'	// Code Slim defaults to software rendering to save memory (~120MB).',
+			'	// Set to true to re-enable GPU acceleration.',
+			'	// "enable-hardware-acceleration": true',
 			'}'
 		];
 
@@ -560,6 +577,9 @@ function configureCrashReporter(): void {
 
 function getJSFlags(cliArgs: NativeParsedArgs, argvConfig: IArgvConfig): string | null {
 	const jsFlags: string[] = [];
+
+	// Low-memory V8 profile: cap old space and enable aggressive GC
+	jsFlags.push('--max-old-space-size=192', '--memory-reducer');
 
 	// Add any existing JS flags we already got from the command line
 	if (cliArgs['js-flags']) {

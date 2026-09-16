@@ -304,7 +304,27 @@ configurationRegistry.registerConfiguration({
 				'.hg/store/**': true,
 				'*/.git/objects/**': true,
 				'*/.git/subtree-cache/**': true,
-				'*/.hg/store/**': true
+				'*/.hg/store/**': true,
+				// Code Slim: exclude common build outputs and dependency caches by
+				// default to keep the file watcher process memory low
+				'.build/**': true,
+				'out/**': true,
+				'dist/**': true,
+				'target/**': true,
+				'.venv/**': true,
+				'venv/**': true,
+				'.gradle/**': true,
+				'.cache/**': true,
+				'.next/**': true,
+				'.nuxt/**': true,
+				'.angular/**': true,
+				'.parcel-cache/**': true,
+				'.turbo/**': true,
+				'coverage/**': true,
+				'*/out/**': true,
+				'*/dist/**': true,
+				'*/.build/**': true,
+				'*/node_modules/**': true
 			},
 			'markdownDescription': nls.localize('watcherExclude', "Configure paths or [glob patterns](https://aka.ms/vscode-glob-patterns) to exclude from file watching. Paths can either be relative to the watched folder or absolute. Glob patterns are matched relative from the watched folder. When you experience the file watcher process consuming a lot of CPU, make sure to exclude large folders that are of less interest (such as build output folders)."),
 			'scope': ConfigurationScope.RESOURCE

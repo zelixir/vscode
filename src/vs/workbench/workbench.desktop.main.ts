@@ -54,8 +54,8 @@ import './services/keybinding/electron-browser/nativeKeyboardLayout.js';
 import './services/path/electron-browser/pathService.js';
 import './services/themes/electron-browser/nativeHostColorSchemeService.js';
 import './services/extensionManagement/electron-browser/extensionManagementService.js';
-import './services/mcp/electron-browser/mcpGalleryManifestService.js';
-import './services/mcp/electron-browser/mcpWorkbenchManagementService.js';
+// Code Slim: removed './services/mcp/electron-browser/mcpGalleryManifestService.js' (MCP contrib removed)
+// Code Slim: removed './services/mcp/electron-browser/mcpWorkbenchManagementService.js' (MCP contrib removed)
 import './services/encryption/electron-browser/encryptionService.js';
 import './services/imageResize/electron-browser/imageResizeService.js';
 import './services/localTranscription/electron-browser/localTranscriptionService.js';
@@ -70,8 +70,9 @@ import './services/extensionManagement/electron-browser/extensionManagementServe
 import './services/extensionManagement/electron-browser/extensionGalleryManifestService.js';
 import './services/extensionManagement/electron-browser/extensionGalleryAccountService.js';
 import './services/extensionManagement/electron-browser/extensionTipsService.js';
-import './services/userDataSync/electron-browser/userDataSyncService.js';
-import './services/userDataSync/electron-browser/userDataAutoSyncService.js';
+// Code Slim: removed './services/userDataSync/electron-browser/userDataSyncService.js' and
+// './services/userDataSync/electron-browser/userDataAutoSyncService.js'
+// (registered by extensions electron-browser contribution, their retained consumers)
 import './services/timer/electron-browser/timerService.js';
 import './services/environment/electron-browser/shellEnvironmentService.js';
 import './services/integrity/electron-browser/integrityService.js';
@@ -82,20 +83,23 @@ import './services/tunnel/electron-browser/tunnelService.js';
 import '../platform/diagnostics/electron-browser/diagnosticsService.js';
 import '../platform/profiling/electron-browser/profilingService.js';
 import '../platform/telemetry/electron-browser/customEndpointTelemetryService.js';
-import '../platform/remoteTunnel/electron-browser/remoteTunnelService.js';
+// Code Slim: removed '../platform/remoteTunnel/electron-browser/remoteTunnelService.js' (remote tunnel removed)
 import './services/files/electron-browser/elevatedFileService.js';
 import './services/search/electron-browser/searchService.js';
 import './services/workingCopy/electron-browser/workingCopyHistoryService.js';
-import './services/userDataSync/browser/userDataSyncEnablementService.js';
+// Code Slim: removed './services/userDataSync/browser/userDataSyncEnablementService.js' (registered by extensions electron-browser contribution)
 import './services/extensions/electron-browser/nativeExtensionService.js';
 import '../platform/userDataProfile/electron-browser/userDataProfileStorageService.js';
 import './services/auxiliaryWindow/electron-browser/auxiliaryWindowService.js';
 import '../platform/extensionManagement/electron-browser/extensionsProfileScannerService.js';
 import '../platform/sandbox/electron-browser/sandboxHelperService.js';
 import '../platform/webContentExtractor/electron-browser/webContentExtractorService.js';
-import './services/agentHost/electron-browser/agentHostService.js';
-import '../platform/agentHost/electron-browser/remoteAgentHostService.js';
-import '../platform/agentHost/browser/agentHostEnablementService.js';
+// Code Slim: removed agent-host service registrations (the agent-sessions/agent-host backend was
+// removed with the chat UI; its AgentHostPrewarmer pulled in LocalAgentHostService ->
+// AgentHostProtocolClient -> IAgentHostResourceService which is no longer registered):
+//   './services/agentHost/electron-browser/agentHostService.js'
+//   '../platform/agentHost/electron-browser/remoteAgentHostService.js'
+//   '../platform/agentHost/browser/agentHostEnablementService.js' (still registered via chat.shared.contribution)
 import './services/browserView/electron-browser/playwrightWorkbenchService.js';
 import './services/process/electron-browser/processService.js';
 import './services/power/electron-browser/powerService.js';
@@ -124,8 +128,8 @@ import './contrib/files/electron-browser/fileActions.contribution.js';
 // CodeEditor Contributions
 import './contrib/codeEditor/electron-browser/codeEditor.contribution.js';
 
-// Debug
-import './contrib/debug/electron-browser/extensionHostDebugService.js';
+// Debug — Code Slim: removed './contrib/debug/electron-browser/extensionHostDebugService.js'
+// (registered by extensions electron-browser contribution, its consumer)
 
 // Extensions Management
 import './contrib/extensions/electron-browser/extensions.contribution.js';
@@ -140,8 +144,7 @@ import './contrib/surveys/browser/survey.contribution.js';
 // Process Explorer
 import './contrib/processExplorer/electron-browser/processExplorer.contribution.js';
 
-// Remote
-import './contrib/remote/electron-browser/remote.contribution.js';
+// Remote — Code Slim: removed './contrib/remote/electron-browser/remote.contribution.js' (remote development removed)
 
 // Terminal
 import './contrib/terminal/electron-browser/terminal.contribution.js';
@@ -149,8 +152,7 @@ import './contrib/terminal/electron-browser/terminal.contribution.js';
 // Themes
 import './contrib/themes/browser/themes.test.contribution.js';
 import './services/themes/electron-browser/themes.contribution.js';
-// User Data Sync
-import './contrib/userDataSync/electron-browser/userDataSync.contribution.js';
+// Code Slim: removed './contrib/userDataSync/electron-browser/userDataSync.contribution.js' (settings sync UI removed)
 
 // Tags
 import './contrib/tags/electron-browser/workspaceTagsService.js';
@@ -158,8 +160,7 @@ import './contrib/tags/electron-browser/tags.contribution.js';
 // Performance
 import './contrib/performance/electron-browser/performance.contribution.js';
 
-// Tasks
-import './contrib/tasks/electron-browser/taskService.js';
+// Tasks — Code Slim: removed './contrib/tasks/electron-browser/taskService.js' (tasks contrib removed)
 
 // External terminal
 import './contrib/externalTerminal/electron-browser/externalTerminal.contribution.js';
@@ -182,15 +183,13 @@ import './contrib/mergeEditor/electron-browser/mergeEditor.contribution.js';
 // Multi Diff Editor
 import './contrib/multiDiffEditor/browser/multiDiffEditor.contribution.js';
 
-// Remote Tunnel
-import './contrib/remoteTunnel/electron-browser/remoteTunnel.contribution.js';
+// Remote Tunnel — Code Slim: removed './contrib/remoteTunnel/electron-browser/remoteTunnel.contribution.js' (remote tunnel removed)
 
-// Chat
-import './contrib/chat/electron-browser/chat.contribution.js';
-import './contrib/chat/electron-browser/tunnelHost.contribution.js';
+// Chat — Code Slim: removed chat / agent-host tunnel electron contributions:
+//   './contrib/chat/electron-browser/chat.contribution.js'
+//   './contrib/chat/electron-browser/tunnelHost.contribution.js'
 
-// Copilot Voice
-import './contrib/agentsVoice/electron-browser/agentsVoiceNativeCommands.js';
+// Copilot Voice — Code Slim: removed './contrib/agentsVoice/electron-browser/agentsVoiceNativeCommands.js'
 
 // Encryption
 import './contrib/encryption/electron-browser/encryption.contribution.js';
@@ -198,8 +197,7 @@ import './contrib/encryption/electron-browser/encryption.contribution.js';
 // Emergency Alert
 import './contrib/emergencyAlert/electron-browser/emergencyAlert.contribution.js';
 
-// MCP
-import './contrib/mcp/electron-browser/mcp.contribution.js';
+// MCP — Code Slim: removed './contrib/mcp/electron-browser/mcp.contribution.js' (MCP contrib removed)
 
 // Policy Export
 import './contrib/policyExport/electron-browser/policyExport.contribution.js';

@@ -50,8 +50,8 @@ import { AccessibilityVerbositySettingId } from '../../../accessibility/browser/
 import { ChatPetAchievementIds, shouldUnlockChatPetIntegratedBrowserShare } from '../../../chat/browser/chatPetAchievements.js';
 import { IChatPetService } from '../../../chat/browser/chatPetService.js';
 
-// Register tools
-import '../tools/browserTools.contribution.js';
+// Code Slim: removed '../tools/browserTools.contribution.js' (browserView.chatAgentTools —
+// registered chat agent tools; ILanguageModelToolsService needs IMcpService)
 
 /**
  * Setting that controls whether a screenshot of the selected element is attached

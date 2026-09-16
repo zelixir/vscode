@@ -22,7 +22,6 @@ import { IStorageService } from '../../../../platform/storage/common/storage.js'
 import { ExtensionKeyedWebviewOriginStore, IWebview, IWebviewService, WebviewContentPurpose } from '../../../contrib/webview/browser/webview.js';
 import { IExtensionService, isProposedApiEnabled } from '../../../services/extensions/common/extensions.js';
 import { ExtensionsRegistry, IExtensionPointUser } from '../../../services/extensions/common/extensionsRegistry.js';
-import { IChatWidgetService } from './chat.js';
 
 export interface IChatOutputItemRenderer {
 	renderOutputPart(mime: string, data: Uint8Array, webview: IWebview, context: IChatOutputRenderContext, token: CancellationToken): Promise<void>;
@@ -96,7 +95,7 @@ export class ChatOutputRendererService extends Disposable implements IChatOutput
 		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
 		@IExtensionService private readonly _extensionService: IExtensionService,
 		@IWebviewService private readonly _webviewService: IWebviewService,
-		@IChatWidgetService private readonly _chatWidgetService: IChatWidgetService,
+		// Code Slim: removed IChatWidgetService injection (chat widget service needs IMcpService)
 		@IStorageService storageService: IStorageService,
 	) {
 		super();
@@ -163,9 +162,7 @@ export class ChatOutputRendererService extends Disposable implements IChatOutput
 			extension: rendererData.options.extension ? rendererData.options.extension : undefined,
 		}));
 		webview.setContextKeyService(store.add(this._contextKeyService.createScoped(parent)));
-		if (webviewOptions.chatSessionResource) {
-			store.add(this.delegateScrollToChatWidget(webview, webviewOptions.chatSessionResource));
-		}
+		// Code Slim: removed delegateScrollToChatWidget wiring (IChatWidgetService needs IMcpService; no chat widget to delegate to)
 
 		const onDidChangeHeight = store.add(new Emitter<number>());
 		store.add(autorun(reader => {
@@ -193,16 +190,6 @@ export class ChatOutputRendererService extends Disposable implements IChatOutput
 				webview.reinitializeAfterDismount();
 			},
 		};
-	}
-
-	private delegateScrollToChatWidget(webview: IWebview, chatSessionResource: URI): IDisposable {
-		return webview.onDidWheel(e => {
-			this._chatWidgetService.getWidgetBySessionResource(chatSessionResource)?.delegateScrollFromMouseWheelEvent({
-				...e,
-				preventDefault: () => { },
-				stopPropagation: () => { }
-			});
-		});
 	}
 
 	private getOrigin(rendererData: RendererEntry): string | undefined {

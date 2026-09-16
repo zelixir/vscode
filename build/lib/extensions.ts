@@ -163,7 +163,7 @@ function fromLocalEsbuild(extensionPath: string, esbuildConfigFileName: string):
 
 	// Run esbuild, then collect the files
 	new Promise<void>((resolve, reject) => {
-		const proc = cp.execFile(process.argv[0], [esbuildScript], { cwd: extensionPath }, (error, _stdout, stderr) => {
+		const proc = cp.execFile(process.argv[0], ['--experimental-strip-types', esbuildScript], { cwd: extensionPath }, (error, _stdout, stderr) => {
 			if (error) {
 				return reject(error);
 			}
@@ -312,15 +312,9 @@ export function fromGithub({ name, version, repo, sha256, metadata }: IExtension
  */
 const nativeExtensions = [
 	'git',
-	'microsoft-authentication',
 ];
 
 const excludedExtensions = [
-	'copilot',
-	'vscode-api-tests',
-	'vscode-colorize-tests',
-	'vscode-colorize-perf-tests',
-	'vscode-test-resolver',
 	'ms-vscode.node-debug',
 	'ms-vscode.node-debug2',
 ];
@@ -464,33 +458,6 @@ function doPackageLocalExtensionsStream(forWeb: boolean, disableMangle: boolean,
 	);
 }
 
-/**
- * Package the built-in copilot extension specifically.
- * This is used by non-CI local builds where copilot is not downloaded as a VSIX
- * but must be compiled from source and included in the build.
- */
-export function packageCopilotExtensionStream(disableMangle: boolean): Stream {
-	const extensionPath = path.join(root, 'extensions', 'copilot');
-	if (!fs.existsSync(extensionPath)) {
-		return es.readArray([]);
-	}
-
-	const localExtensionsStream = minifyExtensionResources(
-		fromLocal(extensionPath, false, disableMangle)
-			.pipe(rename(p => p.dirname = `extensions/copilot/${p.dirname}`))
-	);
-
-	const productionDependencies = getProductionDependencies('extensions/copilot');
-	const dependenciesSrc = productionDependencies.map(d => path.relative(root, d)).map(d => [`${d}/**`, `!${d}/**/{test,tests}/**`]).flat();
-
-	return es.merge(
-		localExtensionsStream,
-		gulp.src(dependenciesSrc, { base: '.' })
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', '.moduleignore')))
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`)))
-	).pipe(util2.setExecutableBit(['**/*.sh']));
-}
-
 export function packageMarketplaceExtensionsStream(forWeb: boolean): Stream {
 	const marketplaceExtensionsDescriptions = [
 		...builtInExtensions.filter(({ name }) => (forWeb ? !marketplaceWebExtensionsExclude.has(name) : true)),
@@ -607,7 +574,7 @@ export async function esbuildExtensions(taskName: string, isWatch: boolean, scri
 			if (outputRoot) {
 				args.push('--outputRoot', outputRoot);
 			}
-			const proc = cp.execFile(process.argv[0], args, {}, (error, _stdout, stderr) => {
+			const proc = cp.execFile(process.argv[0], ['--experimental-strip-types', ...args], {}, (error, _stdout, stderr) => {
 				if (error) {
 					return reject(error);
 				}
@@ -627,14 +594,11 @@ export async function esbuildExtensions(taskName: string, isWatch: boolean, scri
 
 // Additional projects to run esbuild on. These typically build code for webviews
 const esbuildMediaScripts: { script: string; tsconfig: string }[] = [
-	{ script: 'ipynb/esbuild.notebook.mts', tsconfig: 'ipynb/notebook-src/tsconfig.json' },
 	{ script: 'markdown-language-features/esbuild.notebook.mts', tsconfig: 'markdown-language-features/notebook/tsconfig.json' },
 	{ script: 'markdown-language-features/esbuild.webview.mts', tsconfig: 'markdown-language-features/preview-src/tsconfig.json' },
 	{ script: 'markdown-language-features/esbuild.markdownEditor.mts', tsconfig: 'markdown-language-features/markdown-editor-src/tsconfig.json' },
 	{ script: 'markdown-math/esbuild.notebook.mts', tsconfig: 'markdown-math/notebook/tsconfig.json' },
 	{ script: 'mermaid-markdown-features/esbuild.webview.mts', tsconfig: 'mermaid-markdown-features/preview-src/tsconfig.json' },
-	{ script: 'notebook-renderers/esbuild.notebook.mts', tsconfig: 'notebook-renderers/tsconfig.json' },
-	{ script: 'simple-browser/esbuild.webview.mts', tsconfig: 'simple-browser/preview-src/tsconfig.json' },
 ];
 
 export function buildExtensionMedia(isWatch: boolean, outputRoot?: string): Promise<void> {

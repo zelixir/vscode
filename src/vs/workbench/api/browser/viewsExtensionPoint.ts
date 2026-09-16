@@ -22,9 +22,12 @@ import { CustomTreeView, TreeViewPane } from '../../browser/parts/views/treeView
 import { ViewPaneContainer } from '../../browser/parts/views/viewPaneContainer.js';
 import { IWorkbenchContribution, WorkbenchPhase, registerWorkbenchContribution2 } from '../../common/contributions.js';
 import { ICustomViewDescriptor, IViewContainersRegistry, IViewDescriptor, IViewsRegistry, ViewContainer, Extensions as ViewContainerExtensions, ViewContainerLocation } from '../../common/views.js';
-import { VIEWLET_ID as DEBUG } from '../../contrib/debug/common/debug.js';
+// Code Slim: debug / remote contribs were removed from the workbench entries; use the well-known
+// container id literals so extension-contributed views targeting those containers degrade
+// gracefully (registry lookups return undefined) instead of pulling the contribs into the bundle.
+const DEBUG = 'workbench.view.debug';
 import { VIEWLET_ID as EXPLORER } from '../../contrib/files/common/files.js';
-import { VIEWLET_ID as REMOTE } from '../../contrib/remote/browser/remoteExplorer.js';
+const REMOTE = 'workbench.view.remote';
 import { VIEWLET_ID as SCM } from '../../contrib/scm/common/scm.js';
 import { WebviewViewPane } from '../../contrib/webviewView/browser/webviewViewPane.js';
 import { Extensions as ExtensionFeaturesRegistryExtensions, IExtensionFeatureTableRenderer, IExtensionFeaturesRegistry, IRenderedData, IRowData, ITableData } from '../../services/extensionManagement/common/extensionFeatures.js';

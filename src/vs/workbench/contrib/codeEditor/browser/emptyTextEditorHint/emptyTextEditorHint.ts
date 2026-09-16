@@ -29,7 +29,7 @@ import { SEARCH_RESULT_LANGUAGE_ID } from '../../../../services/search/common/se
 import { AccessibilityVerbositySettingId } from '../../../accessibility/browser/accessibilityConfiguration.js';
 import { IChatAgentService } from '../../../chat/common/participants/chatAgents.js';
 import { ChatAgentLocation } from '../../../chat/common/constants.js';
-import { IInlineChatSessionService } from '../../../inlineChat/browser/inlineChatSessionService.js';
+// Code Slim: removed IInlineChatSessionService import (inline chat contrib removed)
 import { EmptyTextEditorHintContributionId, IEmptyTextEditorHintContribution } from './emptyTextEditorHintTypes.js';
 import './emptyTextEditorHint.css';
 
@@ -43,7 +43,6 @@ export class EmptyTextEditorHintContribution extends Disposable implements IEmpt
 	constructor(
 		protected readonly editor: ICodeEditor,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
-		@IInlineChatSessionService private readonly inlineChatSessionService: IInlineChatSessionService,
 		@IChatAgentService private readonly chatAgentService: IChatAgentService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService
 	) {
@@ -64,14 +63,7 @@ export class EmptyTextEditorHintContribution extends Disposable implements IEmpt
 				this.update();
 			}
 		}));
-		this._register(inlineChatSessionService.onWillStartSession(editor => {
-			if (this.editor === editor) {
-				this.disposeHint();
-			}
-		}));
-		this._register(inlineChatSessionService.onDidChangeSessions(() => {
-			this.update();
-		}));
+		// Code Slim: removed inlineChatSessionService session listeners (inline chat contrib removed)
 	}
 
 	protected shouldRenderHint() {
@@ -90,9 +82,7 @@ export class EmptyTextEditorHintContribution extends Disposable implements IEmpt
 			return false;
 		}
 
-		if (this.inlineChatSessionService.getSessionByTextModel(model.uri)) {
-			return false;
-		}
+		// Code Slim: removed inline chat session check (inline chat contrib removed)
 
 		if (this.editor.getModel()?.getValueLength()) {
 			return false;

@@ -3401,7 +3401,7 @@ class EditorLineHeight extends EditorFloatOption<EditorOption.lineHeight> {
 export interface IEditorMinimapOptions {
 	/**
 	 * Enable the rendering of the minimap.
-	 * Defaults to true.
+	 * Defaults to false in Code Slim.
 	 */
 	enabled?: boolean;
 	/**
@@ -3475,7 +3475,8 @@ class EditorMinimap extends BaseEditorOption<EditorOption.minimap, IEditorMinima
 
 	constructor() {
 		const defaults: EditorMinimapOptions = {
-			enabled: true,
+			// Code Slim: minimap disabled by default (large renderer memory consumer)
+			enabled: false,
 			size: 'proportional',
 			side: 'right',
 			showSlider: 'mouseover',

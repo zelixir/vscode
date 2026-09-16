@@ -15,11 +15,11 @@ import './browser/terminalView.js';
 // primary workbench contribution)
 import '../terminalContrib/accessibility/browser/terminal.accessibility.contribution.js';
 import '../terminalContrib/autoReplies/browser/terminal.autoReplies.contribution.js';
-import '../terminalContrib/chatAgentTools/browser/terminal.chatAgentTools.contribution.js';
+// Code Slim: removed '../terminalContrib/chatAgentTools/browser/terminal.chatAgentTools.contribution.js'; (terminal chat/voice contrib removed)
 import '../terminalContrib/developer/browser/terminal.developer.contribution.js';
 import '../terminalContrib/environmentChanges/browser/terminal.environmentChanges.contribution.js';
 import '../terminalContrib/find/browser/terminal.find.contribution.js';
-import '../terminalContrib/chat/browser/terminal.chat.contribution.js';
+// Code Slim: removed '../terminalContrib/chat/browser/terminal.chat.contribution.js'; (terminal chat/voice contrib removed)
 import '../terminalContrib/commandGuide/browser/terminal.commandGuide.contribution.js';
 import '../terminalContrib/history/browser/terminal.history.contribution.js';
 import '../terminalContrib/inlineHint/browser/terminal.initialHint.contribution.js';
@@ -36,4 +36,4 @@ import '../terminalContrib/sendSignal/browser/terminal.sendSignal.contribution.j
 import '../terminalContrib/suggest/browser/terminal.suggest.contribution.js';
 import '../terminalContrib/telemetry/browser/terminal.telemetry.contribution.js';
 import '../terminalContrib/wslRecommendation/browser/terminal.wslRecommendation.contribution.js';
-import '../terminalContrib/voice/browser/terminal.voice.contribution.js';
+// Code Slim: removed '../terminalContrib/voice/browser/terminal.voice.contribution.js'; (terminal chat/voice contrib removed)

@@ -16,12 +16,12 @@ import { isGroupEditorMoveEvent } from '../../common/editor/editorGroupModel.js'
 import { EditorInput } from '../../common/editor/editorInput.js';
 import { SideBySideEditorInput } from '../../common/editor/sideBySideEditorInput.js';
 import { AbstractTextResourceEditorInput } from '../../common/editor/textResourceEditorInput.js';
-import { ChatEditorInput } from '../../contrib/chat/browser/widgetHosts/editor/chatEditorInput.js';
+// Code Slim: removed ChatEditorInput / InteractiveEditorInput / NotebookEditorInput imports —
+// those editor inputs can no longer be created (chat/interactive/notebook contribs removed),
+// so the instanceof branches below were dropped.
 import { CustomEditorInput } from '../../contrib/customEditor/browser/customEditorInput.js';
-import { InteractiveEditorInput } from '../../contrib/interactive/browser/interactiveEditorInput.js';
 import { MergeEditorInput } from '../../contrib/mergeEditor/browser/mergeEditorInput.js';
 import { MultiDiffEditorInput } from '../../contrib/multiDiffEditor/browser/multiDiffEditorInput.js';
-import { NotebookEditorInput } from '../../contrib/notebook/common/notebookEditorInput.js';
 import { TerminalEditorInput } from '../../contrib/terminal/browser/terminalEditorInput.js';
 import { WebviewInput } from '../../contrib/webviewPanel/browser/webviewEditorInput.js';
 import { columnToEditorGroup, EditorGroupColumn, editorGroupToColumn } from '../../services/editor/common/editorGroupColumn.js';
@@ -143,13 +143,7 @@ export class MainThreadEditorTabs implements MainThreadEditorTabsShape {
 			return { kind: TabInputKind.UnknownInput };
 		}
 
-		if (editor instanceof NotebookEditorInput) {
-			return {
-				kind: TabInputKind.NotebookInput,
-				notebookType: editor.viewType,
-				uri: editor.resource
-			};
-		}
+		// Code Slim: removed NotebookEditorInput branch (notebook contrib removed)
 
 		if (editor instanceof CustomEditorInput) {
 			return {
@@ -180,29 +174,10 @@ export class MainThreadEditorTabs implements MainThreadEditorTabsShape {
 					original: editor.original.resource
 				};
 			}
-			if (editor.modified instanceof NotebookEditorInput && editor.original instanceof NotebookEditorInput) {
-				return {
-					kind: TabInputKind.NotebookDiffInput,
-					notebookType: editor.original.viewType,
-					modified: editor.modified.resource,
-					original: editor.original.resource
-				};
-			}
+			// Code Slim: removed NotebookDiffInput branch (notebook contrib removed)
 		}
 
-		if (editor instanceof InteractiveEditorInput) {
-			return {
-				kind: TabInputKind.InteractiveEditorInput,
-				uri: editor.resource,
-				inputBoxUri: editor.inputResource
-			};
-		}
-
-		if (editor instanceof ChatEditorInput) {
-			return {
-				kind: TabInputKind.ChatEditorInput,
-			};
-		}
+		// Code Slim: removed InteractiveEditorInput / ChatEditorInput branches (contribs removed)
 
 		if (editor instanceof MultiDiffEditorInput) {
 			const diffEditors: TextDiffInputDto[] = [];

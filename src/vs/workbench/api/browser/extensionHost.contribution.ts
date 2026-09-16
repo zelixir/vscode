@@ -19,18 +19,24 @@ import { CSSExtensionPoint } from '../../services/themes/browser/cssExtensionPoi
 import './mainThreadAgentEditorComments.js';
 import './mainThreadLocalization.js';
 import './mainThreadBulkEdits.js';
-import './mainThreadLanguageModels.js';
-import './mainThreadChatAgents2.js';
-import './mainThreadChatCodeMapper.js';
-import './mainThreadLanguageModelTools.js';
-import './mainThreadEmbeddings.js';
+// Code Slim: removed './mainThreadChatAgents2.js' (chat contrib removed)
+// Code Slim: removed './mainThreadChatCodeMapper.js' (chat contrib removed)
+// Code Slim: removed './mainThreadLanguageModelTools.js' (chat tools removed; ILanguageModelToolsService needs IMcpService)
+// Code Slim: kept './mainThreadLanguageModels.js' (re-added): the extension host still constructs
+// ExtHostLanguageModels eagerly (vscode.lm API) and asserts the main-thread proxy exists; all of its
+// service dependencies are still registered.
+// Code Slim: removed './mainThreadEmbeddings.js' (AI contrib removed)
 import './mainThreadCodeInsets.js';
 import './mainThreadCLICommands.js';
 import './mainThreadClipboard.js';
 import './mainThreadCommands.js';
 import './mainThreadConfiguration.js';
 import './mainThreadConsole.js';
-import './mainThreadDebugService.js';
+// Code Slim: re-added './mainThreadEmbeddings.js': it self-contains its IEmbeddingsService (nothing
+// to do with the removed aiEmbeddingVectorService) and the extension host eagerly asserts its proxy.
+import './mainThreadEmbeddings.js';
+import './mainThreadLanguageModels.js';
+// Code Slim: removed './mainThreadDebugService.js' (debug contrib removed)
 import './mainThreadDecorations.js';
 import './mainThreadDiagnostics.js';
 import './mainThreadDialogs.js';
@@ -57,7 +63,7 @@ import './mainThreadDocumentDiff.js';
 import './mainThreadQuickOpen.js';
 import './mainThreadRemoteConnectionData.js';
 import './mainThreadSaveParticipant.js';
-import './mainThreadSpeech.js';
+// Code Slim: removed './mainThreadSpeech.js' (voice/speech extension API removed)
 import './mainThreadEditSessionIdentityParticipant.js';
 import './mainThreadSCM.js';
 import './mainThreadSearch.js';
@@ -76,32 +82,34 @@ import './mainThreadPower.js';
 import './mainThreadWebviewManager.js';
 import './mainThreadWorkspace.js';
 import './mainThreadComments.js';
-import './mainThreadNotebook.js';
-import './mainThreadNotebookKernels.js';
-import './mainThreadNotebookDocumentsAndEditors.js';
-import './mainThreadNotebookRenderers.js';
-import './mainThreadNotebookSaveParticipant.js';
-import './mainThreadInteractive.js';
-import './mainThreadTask.js';
+// Code Slim: removed notebook mainThread participants (notebook contrib removed):
+//   './mainThreadNotebook.js'
+//   './mainThreadNotebookKernels.js'
+//   './mainThreadNotebookDocumentsAndEditors.js'
+//   './mainThreadNotebookRenderers.js'
+//   './mainThreadNotebookSaveParticipant.js'
+// Code Slim: removed './mainThreadInteractive.js' (interactive window removed)
+// Code Slim: removed './mainThreadTask.js' (tasks contrib removed)
 import './mainThreadLabelService.js';
-import './mainThreadTunnelService.js';
+// Code Slim: removed './mainThreadTunnelService.js' (tunnel/remote contrib removed)
 import './mainThreadAuthentication.js';
 import './mainThreadTimeline.js';
-import './mainThreadTesting.js';
+// Code Slim: removed './mainThreadTesting.js' (testing contrib removed)
 import './mainThreadSecretState.js';
 import './mainThreadShare.js';
 import './mainThreadProfileContentHandlers.js';
 import './mainThreadAiRelatedInformation.js';
-import './mainThreadAiEmbeddingVector.js';
-import './mainThreadAiSettingsSearch.js';
-import './mainThreadMcp.js';
-import './mainThreadChatContext.js';
-import './mainThreadChatDebug.js';
-import './mainThreadChatStatus.js';
-import './mainThreadChatQuota.js';
-import './mainThreadChatInputNotification.js';
-import './mainThreadChatOutputRenderer.js';
-import './mainThreadChatSessions.js';
+// Code Slim: removed './mainThreadAiEmbeddingVector.js' (AI contrib removed)
+// Code Slim: removed './mainThreadAiSettingsSearch.js' (AI contrib removed)
+// Code Slim: removed './mainThreadMcp.js' (MCP contrib removed)
+// Code Slim: removed chat mainThread participants (chat UI contrib removed):
+//   './mainThreadChatContext.js'
+//   './mainThreadChatDebug.js'
+//   './mainThreadChatStatus.js'
+//   './mainThreadChatQuota.js'
+//   './mainThreadChatInputNotification.js'
+//   './mainThreadChatOutputRenderer.js'
+//   './mainThreadChatSessions.js'
 import './mainThreadDataChannels.js';
 import './mainThreadMeteredConnection.js';
 import './mainThreadGitExtensionService.js';

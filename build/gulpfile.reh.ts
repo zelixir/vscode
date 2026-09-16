@@ -24,7 +24,7 @@ import glob from 'glob';
 import { promisify } from 'util';
 import rceditCallback from 'rcedit';
 import { compileApiProposalNamesTask, copyCodiconsTask } from './lib/compilation.ts';
-import { cleanExtensionsBuildTask, compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileExtensionMediaBuildTask, compileCopilotExtensionBuildTask } from './gulpfile.extensions.ts';
+import { cleanExtensionsBuildTask, compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileExtensionMediaBuildTask } from './gulpfile.extensions.ts';
 import { vscodeWebResourceIncludes, createVSCodeWebFileContentMapper } from './gulpfile.vscode.web.ts';
 import * as cp from 'child_process';
 import crypto from 'crypto';
@@ -685,7 +685,6 @@ function tweakProductForServerWeb(product: typeof import('../product.json')) {
 				compileApiProposalNamesTask,
 				cleanExtensionsBuildTask,
 				compileNonNativeExtensionsBuildTask,
-				compileCopilotExtensionBuildTask,
 				compileExtensionMediaBuildTask,
 				writeISODate('out-build'),
 				minified ? esbuildBundleMinTask : esbuildBundleTask,

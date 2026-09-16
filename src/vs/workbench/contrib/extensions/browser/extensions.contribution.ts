@@ -48,7 +48,7 @@ import { IUserDataProfilesService } from '../../../../platform/userDataProfile/c
 import { EditorPaneDescriptor, IEditorPaneRegistry } from '../../../browser/editor.js';
 import { Extensions as ConfigurationMigrationExtensions, IConfigurationMigrationRegistry } from '../../../common/configuration.js';
 import { IsSessionsWindowContext, ResourceContextKey, WorkbenchStateContext } from '../../../common/contextkeys.js';
-import { IWorkbenchContribution, IWorkbenchContributionsRegistry, registerWorkbenchContribution2, Extensions as WorkbenchExtensions, WorkbenchPhase } from '../../../common/contributions.js';
+import { IWorkbenchContribution, IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions } from '../../../common/contributions.js';
 import { EditorExtensions } from '../../../common/editor.js';
 import { IViewContainersRegistry, Extensions as ViewContainerExtensions, ViewContainerLocation } from '../../../common/views.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
@@ -63,7 +63,6 @@ import { CONTEXT_SYNC_ENABLEMENT } from '../../../services/userDataSync/common/u
 import { IViewsService } from '../../../services/views/common/viewsService.js';
 import { WORKSPACE_TRUST_EXTENSION_SUPPORT } from '../../../services/workspaces/common/workspaceTrust.js';
 import { IPluginInstallService } from '../../chat/common/plugins/pluginInstallService.js';
-import { ILanguageModelToolsService } from '../../chat/common/tools/languageModelToolsService.js';
 import { CONTEXT_KEYBINDINGS_EDITOR } from '../../preferences/common/preferences.js';
 import { IWebview } from '../../webview/browser/webview.js';
 import { Query } from '../common/extensionQuery.js';
@@ -71,7 +70,6 @@ import { AutoRestartConfigurationKey, AutoUpdateConfigurationKey, CONTEXT_EXTENS
 import { ExtensionsConfigurationSchema, ExtensionsConfigurationSchemaId } from '../common/extensionsFileTemplate.js';
 import { ExtensionsInput } from '../common/extensionsInput.js';
 import { KeymapExtensions } from '../common/extensionsUtils.js';
-import { SearchExtensionsTool, SearchExtensionsToolData } from '../common/searchExtensionsTool.js';
 import { ExtensionEditor } from './extensionEditor.js';
 import { ExtensionEnablementWorkspaceTrustTransitionParticipant } from './extensionEnablementWorkspaceTrustTransitionParticipant.js';
 import { ExtensionRecommendationNotificationService } from './extensionRecommendationNotificationService.js';
@@ -2109,20 +2107,9 @@ class TrustedPublishersInitializer implements IWorkbenchContribution {
 	}
 }
 
-class ExtensionToolsContribution extends Disposable implements IWorkbenchContribution {
-
-	static readonly ID = 'extensions.chat.toolsContribution';
-
-	constructor(
-		@ILanguageModelToolsService toolsService: ILanguageModelToolsService,
-		@IInstantiationService instantiationService: IInstantiationService,
-	) {
-		super();
-		const searchExtensionsTool = instantiationService.createInstance(SearchExtensionsTool);
-		this._register(toolsService.registerTool(SearchExtensionsToolData, searchExtensionsTool));
-		this._register(toolsService.vscodeToolSet.addTool(SearchExtensionsToolData));
-	}
-}
+// Code Slim: removed ExtensionToolsContribution ('extensions.chat.toolsContribution') — it registered
+// the searchExtensions language-model tool, which only chat consumed; ILanguageModelToolsService
+// construction needs IMcpService which is no longer registered.
 
 const workbenchRegistry = Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench);
 workbenchRegistry.registerWorkbenchContribution(ExtensionsContributions, LifecyclePhase.Restored);
@@ -2142,7 +2129,7 @@ if (isWeb) {
 	workbenchRegistry.registerWorkbenchContribution(ExtensionStorageCleaner, LifecyclePhase.Eventually);
 }
 
-registerWorkbenchContribution2(ExtensionToolsContribution.ID, ExtensionToolsContribution, WorkbenchPhase.AfterRestored);
+// Code Slim: ExtensionToolsContribution registration removed (see above).
 
 registerAction2(class ExtensionsGallerySignInAction extends Action2 {
 	constructor() {
