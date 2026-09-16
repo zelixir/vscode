@@ -205,21 +205,20 @@ jobs:
         if: failure()
         shell: pwsh
         run: |
-          if (-not (Test-Path gulp-win32.log)) { exit 0 }
-          $lines = Get-Content gulp-win32.log
-          $pat = 'error|Error|ERROR|FAILED|fatal|✖|Exception|not found|Cannot '
-          $hits = $lines | Select-String -Pattern $pat
-          $pick = @($hits | ForEach-Object { $_.Line.Trim() } | Select-Object -Unique) + @($lines | Select-Object -Last 30)
-          $pick = $pick | Where-Object { $_ } | Select-Object -First 60
-          "## gulp failure key lines (win32)`n" + (($pick | ForEach-Object { '```'; $_; '```' }) -join "`n") |
-            Add-Content $env:GITHUB_STEP_SUMMARY
-          $i = 0
-          foreach ($l in $pick) {
-            if ($i -ge 8) { break }
-            $t = $l; if ($t.Length -gt 400) { $t = $t.Substring(0, 400) }
-            Write-Output "::error::$t"
-            $i++
-          }
+          try {
+            if (-not (Test-Path gulp-win32.log)) { exit 0 }
+            $lines = Get-Content gulp-win32.log
+            $tail = @($lines | Select-Object -Last 10)
+            "## gulp log tail (win32)`n" + (($tail | ForEach-Object { '```'; $_; '```' }) -join "`n") |
+              Add-Content $env:GITHUB_STEP_SUMMARY
+            $i = 0
+            foreach ($l in $tail) {
+              $t = $l.Trim(); if (-not $t) { continue }
+              if ($t.Length -gt 380) { $t = $t.Substring(0, 380) }
+              Write-Output "::error::$i|$t"
+              $i++
+            }
+          } catch { Write-Output "::error::summarize failed: $($_.Exception.Message)" }
 
       # 打 zip：与上游一致，压缩包内容为 ../VSCode-win32-x64 的目录内容
       - name: Zip build output
@@ -318,14 +317,18 @@ jobs:
         run: |
           [ -f gulp-linux.log ] || exit 0
           {
-            echo "## gulp failure key lines (linux)"
+            echo "## gulp log tail (linux)"
             echo '```'
-            grep -nE 'error|Error|ERROR|FAILED|fatal|✖|Exception|not found|Cannot ' gulp-linux.log | head -30
-            echo '--- tail ---'
-            tail -30 gulp-linux.log
+            tail -25 gulp-linux.log
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          grep -m 8 -E 'error|Error|ERROR|FAILED|fatal|✖|Exception|not found|Cannot ' gulp-linux.log | head -c 3000 | while IFS= read -r l; do echo "::error::$l"; done
+          } >> "$GITHUB_STEP_SUMMARY" || true
+          i=0
+          tail -10 gulp-linux.log | while IFS= read -r l; do
+            t=$(printf '%s' "$l" | cut -c1-380)
+            [ -n "$t" ] && echo "::error::$i|$t"
+            i=$((i+1))
+          done
+          exit 0
 
       - name: Tar build output
         shell: bash
