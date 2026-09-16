@@ -561,6 +561,13 @@ function configureCrashReporter(): void {
 		}
 	}
 
+	// Low-memory profile: do not start the crash reporter so Electron never
+	// spawns a separate crashpad-handler process (~9MB). Crash dumps are
+	// disabled; set VSCODE_ENABLE_CRASH_REPORTER=1 to restore them.
+	if (!process.env['VSCODE_ENABLE_CRASH_REPORTER']) {
+		return;
+	}
+
 	// Start crash reporter for all processes
 	const productName = (product.crashReporter ? product.crashReporter.productName : undefined) || product.nameShort;
 	const companyName = (product.crashReporter ? product.crashReporter.companyName : undefined) || 'Microsoft';
@@ -579,7 +586,7 @@ function getJSFlags(cliArgs: NativeParsedArgs, argvConfig: IArgvConfig): string 
 	const jsFlags: string[] = [];
 
 	// Low-memory V8 profile: cap old space and enable aggressive GC
-	jsFlags.push('--max-old-space-size=192', '--memory-reducer');
+	jsFlags.push('--max-old-space-size=160', '--memory-reducer');
 
 	// Add any existing JS flags we already got from the command line
 	if (cliArgs['js-flags']) {

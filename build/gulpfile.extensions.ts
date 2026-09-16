@@ -52,23 +52,14 @@ function onExtensionCompilationEnd(): void {
 // });
 const compilations = [
 	'extensions/configuration-editing/tsconfig.json',
-	'extensions/css-language-features/client/tsconfig.json',
-	'extensions/css-language-features/server/tsconfig.json',
 	'extensions/git/tsconfig.json',
 	'extensions/git-base/tsconfig.json',
-	'extensions/html-language-features/client/tsconfig.json',
-	'extensions/html-language-features/server/tsconfig.json',
-	'extensions/json-language-features/client/tsconfig.json',
-	'extensions/json-language-features/server/tsconfig.json',
 	'extensions/markdown-language-features/tsconfig.json',
 	'extensions/markdown-math/tsconfig.json',
 	'extensions/media-preview/tsconfig.json',
 	'extensions/merge-conflict/tsconfig.json',
 	'extensions/mermaid-markdown-features/tsconfig.json',
-	'extensions/php-language-features/tsconfig.json',
 	'extensions/search-result/tsconfig.json',
-	'extensions/typescript-language-features/web/tsconfig.json',
-	'extensions/typescript-language-features/tsconfig.json',
 
 	'.vscode/extensions/vscode-selfhost-import-aid/tsconfig.json',
 	'.vscode/extensions/vscode-extras/tsconfig.json',

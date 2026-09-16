@@ -335,7 +335,6 @@ const skippedExportMangledProjects = [
 	'configuration-editing',
 	'microsoft-authentication',
 	'github-authentication',
-	'html-language-features/server',
 ];
 
 const skippedExportMangledSymbols = [

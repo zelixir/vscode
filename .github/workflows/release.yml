@@ -155,14 +155,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { Write-Error 'build/ npm ci failed' }
           $extDirs = @(
             'extensions', 'extensions/configuration-editing',
-            'extensions/css-language-features', 'extensions/css-language-features/server',
             'extensions/git', 'extensions/git-base',
-            'extensions/html-language-features', 'extensions/html-language-features/server',
-            'extensions/json-language-features', 'extensions/json-language-features/server',
             'extensions/markdown-language-features', 'extensions/markdown-math',
             'extensions/media-preview', 'extensions/merge-conflict',
-            'extensions/mermaid-markdown-features', 'extensions/php-language-features',
-            'extensions/search-result', 'extensions/typescript-language-features'
+            'extensions/mermaid-markdown-features',
+            'extensions/search-result'
           )
           foreach ($d in $extDirs) {
             if (Test-Path "$d/package-lock.json") {

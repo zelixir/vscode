@@ -647,13 +647,5 @@ function watchTypeCheckExtensionMedia(tsconfigPath: string, config: { taskName: 
 }
 
 export function getBuildRootsForExtension(extensionPath: string): string[] {
-	// These extensions split their code between a client and server folder. We should treat each as build roots
-	if (extensionPath.endsWith('css-language-features') || extensionPath.endsWith('html-language-features') || extensionPath.endsWith('json-language-features')) {
-		return [
-			path.join(extensionPath, 'client'),
-			path.join(extensionPath, 'server'),
-		];
-	}
-
 	return [extensionPath];
 }
