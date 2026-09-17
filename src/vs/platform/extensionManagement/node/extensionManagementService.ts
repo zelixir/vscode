@@ -345,6 +345,16 @@ export class ExtensionManagementService extends AbstractExtensionManagementServi
 		const { location, verificationStatus } = await this.extensionsDownloader.download(extension, operation, verifySignature, clientTargetPlatform);
 		const shouldRequireSignature = shouldRequireRepositorySignatureFor(extension.private, await this.extensionGalleryManifestService.getExtensionGalleryManifest());
 
+		// Code Slim: this build does not ship the `@vscode/vsce-sign` module, so signature
+		// verification cannot execute and the verification service returns `undefined`.
+		// Degrade to a warning and proceed with the install instead of failing it (same
+		// degradation principle as the ext host actor registration check). Builds that do
+		// ship the module always get a defined verificationStatus and are unaffected.
+		if (verifySignature && !verificationStatus) {
+			this.logService.warn(`Extension signature verification was not executed because the vsce-sign module is not available: ${extension.identifier.id}`);
+			return { location, verificationStatus };
+		}
+
 		if (
 			verificationStatus !== ExtensionSignatureVerificationCode.Success
 			&& !(verificationStatus === ExtensionSignatureVerificationCode.NotSigned && !shouldRequireSignature)
@@ -357,10 +367,6 @@ export class ExtensionManagementService extends AbstractExtensionManagementServi
 			} catch (e) {
 				/* Ignore */
 				this.logService.warn(`Error while deleting the downloaded file`, location.toString(), getErrorMessage(e));
-			}
-
-			if (!verificationStatus) {
-				throw new ExtensionManagementError(nls.localize('signature verification not executed', "Signature verification was not executed."), ExtensionManagementErrorCode.SignatureVerificationInternal);
 			}
 
 			switch (verificationStatus) {
