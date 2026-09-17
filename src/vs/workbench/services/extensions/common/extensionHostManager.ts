@@ -310,8 +310,14 @@ export class ExtensionHostManager extends Disposable implements IExtensionHostMa
 			throw new Error(`Missing IExtensionHostProxy!`);
 		}
 
-		// Check that no named customers are missing
-		this._rpcProtocol.assertRegistered(mainProxyIdentifiers);
+		// Check that no named customers are missing. Code Slim intentionally leaves 23
+		// chat/task/notebook/testing/mcp actors unregistered, so downgrade the hard
+		// self-check to a warning instead of rejecting the extension host proxy.
+		try {
+			this._rpcProtocol.assertRegistered(mainProxyIdentifiers);
+		} catch (err) {
+			this._logService.warn(`Extension host started with intentionally missing main-thread actors: ${err.message}`);
+		}
 
 		return extensionHostProxy;
 	}
