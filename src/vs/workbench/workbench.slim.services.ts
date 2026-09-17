@@ -47,7 +47,12 @@ import { INotebookEditorModelResolverService } from './contrib/notebook/common/n
 import { NotebookModelResolverServiceImpl } from './contrib/notebook/common/notebookEditorModelResolverServiceImpl.js';
 import { INotebookEditorService } from './contrib/notebook/browser/services/notebookEditorService.js';
 import { NotebookEditorWidgetService } from './contrib/notebook/browser/services/notebookEditorServiceImpl.js';
+import { Disposable } from '../base/common/lifecycle.js';
 import { Event } from '../base/common/event.js';
+import { constObservable, IObservable } from '../base/common/observable.js';
+import { IStorageService } from '../platform/storage/common/storage.js';
+import { EnablementModel, IEnablementModel } from './contrib/chat/common/enablement.js';
+import { IAutostartResult, IMcpService, IMcpServer, LazyCollectionState, McpCollectionDefinition } from './contrib/mcp/common/mcpTypes.js';
 import { IOnboardingService } from './contrib/welcomeOnboarding/common/onboardingService.js';
 
 registerSingleton(IIgnoredExtensionsManagementService, IgnoredExtensionsManagementService, InstantiationType.Delayed);
@@ -70,3 +75,30 @@ class HeadlessOnboardingService implements IOnboardingService {
 	show(): void { /* Code Slim: onboarding wizard removed */ }
 }
 registerSingleton(IOnboardingService, HeadlessOnboardingService, InstantiationType.Delayed);
+
+// Code Slim: the MCP UI contributions (and their McpService/McpRegistry registrations) were
+// removed, but retained services still constructor-inject IMcpService (chat service -> tools
+// service), which made startup log "[createInstance] ILanguageModelToolsService depends on
+// IMcpService which is NOT registered" and left the injected value undefined. Keep a headless
+// registration instead: no servers, autostart always resolves to an empty result.
+class HeadlessMcpService extends Disposable implements IMcpService {
+	readonly _serviceBrand: undefined;
+	readonly servers: IObservable<readonly IMcpServer[]> = constObservable([]);
+	readonly lazyCollectionState: IObservable<{ state: LazyCollectionState; collections: McpCollectionDefinition[] }> =
+		constObservable({ state: LazyCollectionState.HasUnknown, collections: [] });
+	readonly enablementModel: IEnablementModel;
+
+	constructor(
+		@IStorageService storageService: IStorageService,
+	) {
+		super();
+		this.enablementModel = this._register(new EnablementModel('mcp.enablement.headless', storageService));
+	}
+
+	resetCaches(): void { /* Code Slim: no MCP servers */ }
+	resetTrust(): void { /* Code Slim: no MCP servers */ }
+	autostart(): IObservable<IAutostartResult> { return constObservable(IAutostartResult.Empty); }
+	cancelAutostart(): void { /* Code Slim: no MCP servers */ }
+	activateCollections(): Promise<void> { return Promise.resolve(); }
+}
+registerSingleton(IMcpService, HeadlessMcpService, InstantiationType.Delayed);
