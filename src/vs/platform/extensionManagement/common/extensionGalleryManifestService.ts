@@ -220,7 +220,12 @@ export class ExtensionGalleryManifestService extends Disposable implements IExte
 					flags,
 				},
 				signing: {
-					allPublicRepositorySigned: true,
+					// Code Slim: the marketplace is Open VSX and this build does not ship the
+					// `@vscode/vsce-sign` module, so repository signatures cannot be verified.
+					// Claiming `allPublicRepositorySigned` would make the extension management
+					// service reject extensions whose signature asset cannot be checked. Report
+					// the accurate capability instead so unsigned extensions remain installable.
+					allPublicRepositorySigned: false,
 				}
 			}
 		};
