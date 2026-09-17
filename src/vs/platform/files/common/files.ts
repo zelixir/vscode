@@ -1634,8 +1634,10 @@ export function getLargeFileConfirmationLimit(arg?: string | URI): number {
 	const isLocal = typeof arg !== 'string' && arg?.scheme === Schemas.file;
 
 	if (isLocal) {
-		// Local almost has no limit in file size
-		return 1024 * ByteSize.MB;
+		// Code Slim: minified bundles and .map files (tens of MB, huge single lines)
+		// blow the renderer up to ~450MB when opened accidentally. Guard local files
+		// with the same confirmation prompt remote files get.
+		return 10 * ByteSize.MB;
 	}
 
 	if (isRemote) {
@@ -1651,8 +1653,8 @@ export function getLargeFileConfirmationLimit(arg?: string | URI): number {
 		return 50 * ByteSize.MB;
 	}
 
-	// Local desktop: almost no limit in file size
-	return 1024 * ByteSize.MB;
+	// Code Slim: local desktop guardrail, see isLocal above
+	return 10 * ByteSize.MB;
 }
 
 //#endregion
