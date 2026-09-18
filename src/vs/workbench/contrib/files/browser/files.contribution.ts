@@ -297,6 +297,10 @@ configurationRegistry.registerConfiguration({
 				'.*': { 'type': 'boolean' }
 			},
 			'default': {
+				// Code Slim: do not watch anything by default (code browsing / light
+				// editing scenario). This keeps the file watcher process idle and
+				// small; users can remove this entry in settings to restore watching.
+				'**': true,
 				// Avoiding a '**' pattern here which results in a very complex
 				// RegExp that can slow things down significantly in large workspaces
 				'.git/objects/**': true,
