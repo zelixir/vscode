@@ -45,14 +45,12 @@
 ### 路线 1：接受 ~300MB 地板（当前状态，v0.1.3-slim 即最终版）
 保留全部功能。空载 301MB（波动 302-316），浏览 4 个大 TS 文件稳定 ~450MB、峰值 ~570MB。
 
-### 路线 2：功能级三砍 → 约 265-285MB
-- `src/main.ts` 加 `app.commandLine.appendSwitch('no-proxy-server')`：-14MB，
-  **代价：系统代理自动检测失效**（国内网络下 Open VSX 商店可能无法直连，需代理的用户慎用）
-- watcher 彻底 no-op（把扩展宿主的 fs watch 请求也短路）：约 -20MB，
-  **代价：git SCM 不自动刷新、依赖文件事件的扩展失效**
-- 砍 shared 进程：约 -30MB，**代价：无法安装扩展（GitLens 装不了）、设置同步栈消失**，
-  需改 `src/vs/code/electron-utility/sharedProcess/sharedProcessMain.ts` 与主进程接线，属产品手术
-- 三项全做约 240-265MB，**仍不到 200**。
+### 路线 2：功能级削减 → 约 285MB（v0.1.4 起内置开关，默认关闭）
+- **代理解析进程（-15MB）**：argv.json（`~/.codeslim/argv.json`）加 `"slim-extreme": true` 即启用
+  （实现为 `--no-proxy-server`）。**代价：系统代理自动检测失效**（国内网络下 Open VSX 商店可能
+  无法直连；可用 settings 的 `http.proxy` 显式指定，或删掉该开关恢复）。
+- watcher：v0.1.3 起默认已不监视任何文件（`files.watcherExclude '**'`）。
+- 彻底 no-op watch 请求 / 砍 shared 进程：见下，未做成开关（会破坏 git 刷新与扩展安装）。
 
 ### 路线 3：纯 Monaco Web 编辑器形态 → 可达 ~200MB 以下
 放弃 Electron 多进程工作台：无文件树、无全局搜索、无 git、无 markdown 预览。

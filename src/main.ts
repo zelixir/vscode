@@ -43,6 +43,14 @@ if (argvConfig['enable-hardware-acceleration'] !== true) {
 	app.disableHardwareAcceleration();
 }
 
+// Opt-in extreme memory mode (argv.json `"slim-extreme": true`): disables
+// Chromium proxy auto-detection, removing the ProxyResolver utility process
+// (~15MB). Costs system-proxy auto-detection; set http.proxy in settings or
+// remove the key to restore. See MEMORY-AUDIT.md.
+if (argvConfig['slim-extreme'] === true) {
+	app.commandLine.appendSwitch('no-proxy-server');
+}
+
 // Enable sandbox globally unless
 // 1) disabled via command line using either
 //    `--no-sandbox` or `--disable-chromium-sandbox` argument.
@@ -398,6 +406,7 @@ interface IArgvConfig {
 	readonly 'proxy-bypass-list'?: string;
 	readonly 'disable-hardware-acceleration'?: boolean;
 	readonly 'enable-hardware-acceleration'?: boolean;
+	readonly 'slim-extreme'?: boolean;
 	readonly 'force-color-profile'?: string;
 	readonly 'enable-crash-reporter'?: boolean;
 	readonly 'crash-reporter-id'?: string;
